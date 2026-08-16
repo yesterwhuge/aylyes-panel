@@ -611,21 +611,13 @@
 
 <div class="modal-backdrop" id="modeModal">
   <div class="modal">
-    <h3>Elige el modo</h3>
+    <h3>Usa el AYLYES Launcher</h3>
     <p>Para el pais <b id="modalCountry"></b></p>
-    <button class="mode-btn" id="modeEmbed">
-      <b>Navegar aqui (sin instalar nada)</b>
-      <span>Funciona para cualquiera que entre al panel, incluidos amigos conectados desde otro lugar. Compatible con paginas simples.</span>
-    </button>
-    <a class="mode-btn" id="modeLauncher" href="/downloads/aylyes-launcher-windows.zip" style="text-decoration:none; display:block;">
-      <b>AYLYES Launcher (compatibilidad total)</b>
-      <span>Descarga la app de escritorio -- abre tu Chrome real con este proxy, cualquier pagina funciona (Canva, YouTube, etc).</span>
-    </a>
-    <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); margin:2px 0 12px;">
-      <input type="checkbox" id="freeOnlyToggle" />
-      Forzar solo proxies gratuitos (para probar su calidad, sin usar Webshare)
-    </label>
-    <button class="btn" id="modalCancel" style="width:100%;margin-top:6px;">Cancelar</button>
+    <div class="mode-btn" style="cursor:default;">
+      <b>Abre la app AYLYES Launcher</b>
+      <span>Elige este mismo pais desde ahi -- abre tu Chrome real con el proxy, compatibilidad total (Canva, YouTube, etc).</span>
+    </div>
+    <button class="btn" id="modalCancel" style="width:100%;margin-top:6px;">Entendido</button>
   </div>
 </div>
 
@@ -1219,12 +1211,6 @@
   }
 
   document.getElementById("modalCancel").addEventListener("click", () => modeModal.classList.remove("show"));
-  document.getElementById("modeLauncher").addEventListener("click", () => modeModal.classList.remove("show"));
-  document.getElementById("modeEmbed").addEventListener("click", () => {
-    const freeOnly = document.getElementById("freeOnlyToggle").checked;
-    modeModal.classList.remove("show");
-    openEmbed(pendingCountry, freeOnly);
-  });
 
   // ---- modo Chrome real ----
   async function openDesktop(country, freeOnly) {
