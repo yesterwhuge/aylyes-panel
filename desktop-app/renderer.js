@@ -107,7 +107,19 @@ async function loadMain() {
 
   const { connected } = await window.aylyes.isConnected();
   if (!connected) showDisconnected();
+
+  // si la app se abrio (o ya estaba abierta) por el link "aylyes://" del
+  // panel web, conecta directo al pais que venia en el link
+  const pending = await window.aylyes.takePendingCountry();
+  if (pending) tryConnectByCountry(pending);
 }
+
+function tryConnectByCountry(country) {
+  if (!token) return; // no logueado todavia, se ignora (raro, requiere login previo)
+  const card = $("gridScroll").querySelector(`.country-card[data-country="${country}"]`);
+  connectTo(country, card);
+}
+window.aylyes.onOpenCountry((country) => tryConnectByCountry(country));
 
 function renderGrid(codes) {
   const byRegion = {};
@@ -160,10 +172,10 @@ function showConnected(data) {
 async function connectTo(country, card) {
   const err = $("mainError");
   err.textContent = "";
-  card.classList.add("loading");
+  if (card) card.classList.add("loading");
 
   const res = await window.aylyes.connect(token, country);
-  card.classList.remove("loading");
+  if (card) card.classList.remove("loading");
 
   if (res.ok) showConnected(res);
   else err.textContent = res.error;

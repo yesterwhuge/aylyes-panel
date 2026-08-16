@@ -33,6 +33,51 @@ async function api(method, urlPath, { token, body } = {}) {
   }
 }
 
+// ---------- link "aylyes://open?country=XX" desde la pagina web ----------
+// asi el boton "Abre la app AYLYES Launcher" del panel puede abrir/enfocar
+// esta app y seleccionar el pais solo, en vez de que el usuario tenga que
+// buscarla y hacer clic el mismo. Un sitio web no puede abrir un .exe
+// directamente (por seguridad del navegador) -- esto es el mecanismo real
+// que usan apps como Zoom/Discord para sus links "abrir en la app".
+const PROTOCOL = "aylyes";
+let pendingCountry = null;
+
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient(PROTOCOL, process.execPath, [path.resolve(process.argv[1])]);
+  }
+} else {
+  app.setAsDefaultProtocolClient(PROTOCOL);
+}
+
+function handleProtocolUrl(rawUrl) {
+  try {
+    const u = new URL(rawUrl);
+    const country = (u.searchParams.get("country") || "").toUpperCase();
+    if (!country) return;
+    pendingCountry = country;
+    if (mainWindow) mainWindow.webContents.send("open-country", country);
+  } catch { /* url invalido, se ignora */ }
+}
+
+// solo una instancia de la app -- si ya esta abierta y clickean el link de
+// nuevo, enfocamos la ventana existente en vez de abrir otra
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+} else {
+  app.on("second-instance", (event, argv) => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
+    }
+    const url = argv.find((a) => a.startsWith(`${PROTOCOL}://`));
+    if (url) handleProtocolUrl(url);
+  });
+}
+app.on("open-url", (event, url) => { event.preventDefault(); handleProtocolUrl(url); }); // macOS
+
 let mainWindow;
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -51,7 +96,11 @@ function createWindow() {
   mainWindow.loadFile("index.html");
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+  const initialUrl = process.argv.find((a) => a.startsWith(`${PROTOCOL}://`));
+  if (initialUrl) handleProtocolUrl(initialUrl);
+});
 app.on("window-all-closed", async () => {
   await proxyLauncher.closeCurrent();
   if (process.platform !== "darwin") app.quit();
@@ -106,3 +155,9 @@ ipcMain.handle("disconnect", async () => {
 });
 
 ipcMain.handle("is-connected", () => ({ connected: proxyLauncher.isConnected() }));
+
+ipcMain.handle("take-pending-country", () => {
+  const c = pendingCountry;
+  pendingCountry = null;
+  return c;
+});

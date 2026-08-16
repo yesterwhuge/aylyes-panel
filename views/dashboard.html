@@ -613,11 +613,12 @@
   <div class="modal">
     <h3>Usa el AYLYES Launcher</h3>
     <p>Para el pais <b id="modalCountry"></b></p>
-    <div class="mode-btn" style="cursor:default;">
-      <b>Abre la app AYLYES Launcher</b>
-      <span>Elige este mismo pais desde ahi -- abre tu Chrome real con el proxy, compatibilidad total (Canva, YouTube, etc).</span>
-    </div>
-    <button class="btn" id="modalCancel" style="width:100%;margin-top:6px;">Entendido</button>
+    <a class="mode-btn" id="openLauncherBtn" href="#" style="text-decoration:none; display:block;">
+      <b>Abrir en AYLYES Launcher</b>
+      <span>Abre la app ya instalada y selecciona este pais solo -- Chrome real, compatibilidad total (Canva, YouTube, etc).</span>
+    </a>
+    <p class="hint" style="font-size:11px; color:var(--muted); margin:10px 2px 0;">Si no pasa nada, abre la app AYLYES Launcher a mano y elige el pais ahi.</p>
+    <button class="btn" id="modalCancel" style="width:100%;margin-top:12px;">Cerrar</button>
   </div>
 </div>
 
@@ -1205,12 +1206,14 @@
       card.addEventListener("click", () => {
         pendingCountry = card.dataset.country;
         document.getElementById("modalCountry").textContent = pendingCountry;
+        document.getElementById("openLauncherBtn").href = `aylyes://open?country=${encodeURIComponent(pendingCountry)}`;
         modeModal.classList.add("show");
       });
     });
   }
 
   document.getElementById("modalCancel").addEventListener("click", () => modeModal.classList.remove("show"));
+  document.getElementById("openLauncherBtn").addEventListener("click", () => modeModal.classList.remove("show"));
 
   // ---- modo Chrome real ----
   async function openDesktop(country, freeOnly) {
