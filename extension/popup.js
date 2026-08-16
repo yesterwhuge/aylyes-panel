@@ -9,6 +9,24 @@ function showView(name) {
 
 let pendingUsername = null;
 
+// nombres de pais completos + bandera, usando la base de datos que ya trae
+// el navegador (mismo mecanismo que usa el panel web)
+const regionNames = typeof Intl !== "undefined" && Intl.DisplayNames
+  ? new Intl.DisplayNames(["es"], { type: "region" })
+  : null;
+function countryName(code) {
+  try {
+    const name = regionNames && regionNames.of(code);
+    return name && name !== code ? name : "Pais " + code;
+  } catch {
+    return "Pais " + code;
+  }
+}
+function flagEmoji(code) {
+  if (!code || code.length !== 2) return "";
+  return [...code.toUpperCase()].map((ch) => String.fromCodePoint(127397 + ch.charCodeAt(0))).join("");
+}
+
 async function getToken() {
   const { token } = await chrome.storage.local.get("token");
   return token || null;
@@ -96,7 +114,9 @@ async function loadMain() {
 
     const countries = await apiFetch("/api/extension/countries");
     const select = $("countrySelect");
-    select.innerHTML = countries.map((c) => `<option value="${c}">${c}</option>`).join("");
+    select.innerHTML = countries
+      .map((c) => `<option value="${c}">${flagEmoji(c)} ${countryName(c)}</option>`)
+      .join("");
 
     const { activeProxy } = await chrome.storage.local.get("activeProxy");
     if (activeProxy && activeProxy.expiresAt > Date.now()) {
@@ -122,7 +142,7 @@ let countdownTimer = null;
 function showConnected(proxy) {
   $("disconnectedBlock").style.display = "none";
   $("connectedBlock").style.display = "block";
-  $("connectedCountry").textContent = proxy.country;
+  $("connectedCountry").textContent = `${flagEmoji(proxy.country)} ${countryName(proxy.country)}`;
 
   clearInterval(countdownTimer);
   function tick() {

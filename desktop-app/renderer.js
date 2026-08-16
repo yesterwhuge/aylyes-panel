@@ -8,6 +8,24 @@ function showView(name) {
 let token = null;
 let pendingUsername = null;
 
+// nombres de pais completos + bandera, usando la base de datos que ya trae
+// el navegador (mismo mecanismo que usa el panel web)
+const regionNames = typeof Intl !== "undefined" && Intl.DisplayNames
+  ? new Intl.DisplayNames(["es"], { type: "region" })
+  : null;
+function countryName(code) {
+  try {
+    const name = regionNames && regionNames.of(code);
+    return name && name !== code ? name : "Pais " + code;
+  } catch {
+    return "Pais " + code;
+  }
+}
+function flagEmoji(code) {
+  if (!code || code.length !== 2) return "";
+  return [...code.toUpperCase()].map((ch) => String.fromCodePoint(127397 + ch.charCodeAt(0))).join("");
+}
+
 $("loginBtn").addEventListener("click", async () => {
   const username = $("loginUsername").value.trim();
   const password = $("loginPassword").value;
@@ -68,7 +86,9 @@ async function loadMain() {
 
   const countries = await window.aylyes.getCountries(token);
   if (countries.ok) {
-    $("countrySelect").innerHTML = countries.countries.map((c) => `<option value="${c}">${c}</option>`).join("");
+    $("countrySelect").innerHTML = countries.countries
+      .map((c) => `<option value="${c}">${flagEmoji(c)} ${countryName(c)}</option>`)
+      .join("");
   }
 
   const { connected } = await window.aylyes.isConnected();
@@ -84,7 +104,7 @@ let countdownTimer = null;
 function showConnected(data) {
   $("disconnectedBlock").style.display = "none";
   $("connectedBlock").style.display = "block";
-  $("connectedCountry").textContent = data.country;
+  $("connectedCountry").textContent = `${flagEmoji(data.country)} ${countryName(data.country)}`;
 
   clearInterval(countdownTimer);
   function tick() {
