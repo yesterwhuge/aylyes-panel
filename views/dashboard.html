@@ -613,14 +613,14 @@
   <div class="modal">
     <h3>Elige el modo</h3>
     <p>Para el pais <b id="modalCountry"></b></p>
-    <button class="mode-btn" id="modeDesktop">
-      <b>Chrome real (solo esta PC)</b>
-      <span>Ventana de navegador de verdad, mejor compatibilidad, pero solo la ves en esta computadora.</span>
-    </button>
     <button class="mode-btn" id="modeEmbed">
-      <b>Navegar aqui (compatible remoto)</b>
-      <span>Funciona para cualquiera que entre al panel, incluidos amigos conectados desde otro lugar.</span>
+      <b>Navegar aqui (sin instalar nada)</b>
+      <span>Funciona para cualquiera que entre al panel, incluidos amigos conectados desde otro lugar. Compatible con paginas simples.</span>
     </button>
+    <a class="mode-btn" id="modeLauncher" href="/downloads/aylyes-launcher-windows.zip" style="text-decoration:none; display:block;">
+      <b>AYLYES Launcher (compatibilidad total)</b>
+      <span>Descarga la app de escritorio -- abre tu Chrome real con este proxy, cualquier pagina funciona (Canva, YouTube, etc).</span>
+    </a>
     <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); margin:2px 0 12px;">
       <input type="checkbox" id="freeOnlyToggle" />
       Forzar solo proxies gratuitos (para probar su calidad, sin usar Webshare)
@@ -1219,11 +1219,7 @@
   }
 
   document.getElementById("modalCancel").addEventListener("click", () => modeModal.classList.remove("show"));
-  document.getElementById("modeDesktop").addEventListener("click", () => {
-    const freeOnly = document.getElementById("freeOnlyToggle").checked;
-    modeModal.classList.remove("show");
-    openDesktop(pendingCountry, freeOnly);
-  });
+  document.getElementById("modeLauncher").addEventListener("click", () => modeModal.classList.remove("show"));
   document.getElementById("modeEmbed").addEventListener("click", () => {
     const freeOnly = document.getElementById("freeOnlyToggle").checked;
     modeModal.classList.remove("show");

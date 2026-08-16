@@ -4,3 +4,4 @@ profiles/
 data/
 server.log
 *.log
+public/downloads/
