@@ -14,13 +14,17 @@ async function getState() {
 }
 
 // contesta el dialogo de usuario/clave del proxy solo, usando las
-// credenciales que guardamos al conectar
+// credenciales que guardamos al conectar. Usamos el callback explicito
+// (en vez de devolver una Promise) porque es la forma mas confiable para
+// este evento en particular -- si Chrome no recibe la respuesta rapido te
+// muestra su propio dialogo feo de usuario/clave como respaldo.
 chrome.webRequest.onAuthRequired.addListener(
-  async (details) => {
-    if (!details.isProxy) return {};
-    const { activeProxy } = await getState();
-    if (!activeProxy) return {};
-    return { authCredentials: { username: activeProxy.username, password: activeProxy.password } };
+  (details, callback) => {
+    if (!details.isProxy) { callback({}); return; }
+    getState().then(({ activeProxy }) => {
+      if (!activeProxy) { callback({}); return; }
+      callback({ authCredentials: { username: activeProxy.username, password: activeProxy.password } });
+    });
   },
   { urls: ["<all_urls>"] },
   ["asyncBlocking"]
