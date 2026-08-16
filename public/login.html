@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AYLYES PANEL — Login</title>
+<style>
+  :root {
+    --bg: #f4f6fb; --panel: #ffffff; --panel-2: #f8f9fd; --border: #e2e6f0;
+    --text: #1a1e2c; --muted: #7b8194; --cyan: #29a6ff; --purple: #a84dff;
+    --green: #22c58b; --red: #ff5c7a; --shadow: rgba(30,40,80,0.10); --glow: 41,166,255;
+  }
+  [data-theme="dark"] {
+    --bg: #05060a; --panel: #0d1018; --panel-2: #10141f; --border: #1e2536;
+    --text: #e7ecff; --muted: #6d7690; --cyan: #29f5ff; --purple: #b46bff;
+    --green: #3ef5a0; --red: #ff5c7a; --shadow: rgba(0,0,0,0.5); --glow: 41,245,255;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh; /* evita el salto cuando el navegador movil oculta/muestra la barra */
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    transition: background 0.25s, color 0.25s;
+    display: flex; flex-direction: column;
+    overflow-x: hidden;
+  }
+  .bg-dots {
+    position: fixed; inset: 0; z-index: -2; opacity: 0.5;
+    background-image: radial-gradient(var(--border) 1px, transparent 1px);
+    background-size: 26px 26px;
+  }
+  #particles { position: fixed; inset: 0; z-index: -1; }
+
+  /* logo animado letra por letra: el degradado va en CADA letra, no en el
+     contenedor -- un span inline-block corta el recorte de texto del padre */
+  .logo .letters { display: inline-block; }
+  .logo .letters span {
+    display: inline-block;
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent; -webkit-text-fill-color: transparent;
+    animation: floatLetter 2.2s ease-in-out infinite;
+  }
+  @keyframes floatLetter {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-9px) scale(1.08); }
+  }
+
+  /* pantalla de exito al loguear */
+  .success-overlay {
+    position: fixed; inset: 0; z-index: 100; display: none;
+    align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+    background: var(--bg); opacity: 0; transition: opacity 0.4s;
+  }
+  .success-overlay.show { display: flex; opacity: 1; }
+  .success-ring {
+    width: 90px; height: 90px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px; color: #fff;
+    animation: pop 0.5s cubic-bezier(.34,1.56,.64,1);
+    box-shadow: 0 10px 40px rgba(150,90,255,0.4);
+  }
+  @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+  .success-text { color: var(--text); font-weight: 700; letter-spacing: 1px; }
+
+  button.submit.loading { opacity: 0.75; cursor: default; }
+  .spinner {
+    width: 15px; height: 15px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.5); border-top-color: #fff;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .topbar {
+    display: flex; justify-content: flex-end; align-items: center; gap: 10px;
+    padding: 14px 20px; flex-wrap: wrap; flex-shrink: 0;
+  }
+  .chip {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 7px 13px; font-size: 11px; color: var(--muted);
+    box-shadow: 0 4px 14px var(--shadow);
+  }
+  .chip b { color: var(--green); font-size: 15px; }
+  .chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .chip .time { color: var(--text); font-weight: 700; font-size: 14px; }
+  .chip .date { font-size: 11px; }
+
+  .theme-toggle {
+    display: flex; align-items: center; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px; box-shadow: 0 4px 14px var(--shadow); gap: 2px;
+  }
+  .theme-toggle button {
+    border: none; background: transparent; width: 32px; height: 32px; border-radius: 50%;
+    cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center;
+    color: var(--muted);
+  }
+  .theme-toggle button.active {
+    background: linear-gradient(135deg, var(--cyan), var(--purple)); color: #fff;
+  }
+
+  .wrap {
+    display: grid; grid-template-columns: 1fr; gap: 28px;
+    max-width: 1180px; margin: 0 auto; padding: 6px 20px 20px;
+    align-items: center;
+    flex: 1;
+    width: 100%;
+  }
+  @media (min-width: 900px) { .wrap { grid-template-columns: 400px 1fr; align-items: stretch; } }
+
+  /* marco de esquinas cortadas (octagono) con doble linea en degradado */
+  .card-frame {
+    position: relative; padding: 10px;
+    clip-path: polygon(26px 0, calc(100% - 26px) 0, 100% 26px, 100% calc(100% - 26px), calc(100% - 26px) 100%, 26px 100%, 0 calc(100% - 26px), 0 26px);
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+  }
+  .card-frame::before {
+    content: "";
+    position: absolute; inset: 4px;
+    clip-path: polygon(22px 0, calc(100% - 22px) 0, 100% 22px, 100% calc(100% - 22px), calc(100% - 22px) 100%, 22px 100%, 0 calc(100% - 22px), 0 22px);
+    background: var(--bg);
+    z-index: 0;
+  }
+  .card {
+    position: relative; z-index: 1;
+    background: var(--panel);
+    clip-path: polygon(20px 0, calc(100% - 20px) 0, 100% 20px, 100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%, 0 calc(100% - 20px), 0 20px);
+    padding: 30px 30px 22px;
+    box-shadow: 0 20px 50px var(--shadow);
+  }
+
+  .logo {
+    font-weight: 800; letter-spacing: 5px; font-size: 24px; text-align: center;
+  }
+  .logo .sublabel {
+    display: flex; align-items: center; gap: 10px; justify-content: center;
+    letter-spacing: 3px; font-size: 10px; color: var(--muted); margin-top: 4px;
+  }
+  .logo .sublabel::before, .logo .sublabel::after {
+    content: ""; width: 26px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cyan));
+  }
+  .logo .sublabel::after { background: linear-gradient(90deg, var(--purple), transparent); }
+  .tagline { text-align: center; color: var(--muted); font-size: 12px; margin: 8px 0 18px; }
+  .tagline b { color: var(--text); }
+
+  .field { margin-bottom: 10px; }
+  .input-row {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px;
+    padding: 8px 14px;
+  }
+  .input-row:focus-within { border-color: var(--cyan); }
+  .input-row .icon { color: var(--cyan); font-size: 16px; }
+  .input-col { flex: 1; display: flex; flex-direction: column; }
+  .input-col label {
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted);
+  }
+  .input-col input {
+    border: none; outline: none; background: transparent; color: var(--text);
+    font-size: 15px; padding: 2px 0 0;
+  }
+  .eye { cursor: pointer; color: var(--muted); font-size: 16px; user-select: none; }
+
+  .row-between { display: flex; align-items: center; justify-content: space-between; margin: 14px 2px 0; font-size: 12px; }
+  .remember { display: flex; align-items: center; gap: 8px; color: var(--muted); cursor: pointer; }
+  .remember input {
+    appearance: none; width: 16px; height: 16px; border-radius: 5px; border: 1px solid var(--border);
+    background: var(--panel-2); cursor: pointer; position: relative;
+  }
+  .remember input:checked { background: linear-gradient(135deg, var(--cyan), var(--purple)); border-color: transparent; }
+  .remember input:checked::after {
+    content: "\2713"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 11px;
+  }
+  .forgot { color: var(--purple); text-decoration: none; font-weight: 600; cursor: pointer; background: none; border: none; font-size: 12px; }
+
+  button.submit {
+    width: 100%; margin-top: 16px; padding: 12px; border: none; border-radius: 999px;
+    background: linear-gradient(90deg, var(--cyan), var(--purple)); color: #fff;
+    font-weight: 700; cursor: pointer; font-size: 14px; letter-spacing: 0.5px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .error { color: var(--red); font-size: 12px; margin-top: 10px; text-align: center; min-height: 14px; }
+
+  .divider { display: flex; align-items: center; gap: 12px; margin: 16px 0 12px; color: var(--muted); font-size: 10px; letter-spacing: 1px; }
+  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+
+  .key-btn {
+    width: 100%; display: flex; align-items: center; gap: 12px;
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px 16px; color: var(--text); font-size: 13px; cursor: pointer;
+  }
+  .key-btn .icon { color: var(--cyan); font-size: 16px; }
+  .key-btn .chev { margin-left: auto; color: var(--muted); }
+
+  .secure-note {
+    text-align: center; color: var(--muted); font-size: 11px; margin-top: 16px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .secure-note .dot { color: var(--green); }
+
+  /* panel derecho */
+  .promo {
+    display: none; position: relative; border-radius: 20px; overflow: hidden;
+    background: var(--panel); border: 1px solid var(--border);
+    align-items: center; justify-content: center; text-align: center;
+    box-shadow: 0 20px 50px var(--shadow);
+  }
+  @media (min-width: 900px) { .promo { display: flex; } }
+  .promo-inner { padding: 40px; }
+  .contact-label {
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 10px;
+  }
+  .telegram-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin: 0 auto 30px; padding: 8px 18px; border-radius: 999px;
+    background: var(--panel-2); border: 1.5px solid var(--cyan);
+    color: var(--cyan); font-size: 13px; font-weight: 600; letter-spacing: 0.5px;
+    box-shadow: 0 0 10px rgba(var(--glow),0.4), 0 4px 14px var(--shadow);
+    text-decoration: none; cursor: pointer;
+    transition: box-shadow 0.2s, border-color 0.2s, transform 0.15s;
+  }
+  .telegram-tag:hover {
+    border-color: var(--purple);
+    box-shadow: 0 0 16px rgba(var(--glow2),0.5), 0 4px 18px var(--shadow);
+    transform: translateY(-1px);
+  }
+  .badge-ring {
+    width: 220px; height: 220px; margin: 0 auto 26px; border-radius: 50%;
+    border: 2px dashed var(--cyan); display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .badge-ring::before {
+    content: ""; position: absolute; inset: -2px; border-radius: 50%;
+    border: 2px solid var(--purple); border-style: dashed; opacity: 0.5;
+    animation: spin 30s linear infinite;
+  }
+  .badge-A {
+    width: 150px; height: 150px; border-radius: 50%;
+    background: var(--panel);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 10px 40px rgba(150,90,255,0.35);
+  }
+  .badge-A svg { width: 68%; height: 68%; filter: drop-shadow(0 6px 14px rgba(150,90,255,0.4)); }
+  .promo .logo { font-size: 30px; letter-spacing: 6px; margin-top: 6px; }
+
+  footer { text-align: center; color: var(--muted); font-size: 10px; padding: 6px 20px 14px; flex-shrink: 0; }
+
+  @media (max-width: 480px) {
+    .topbar { padding: 10px 14px; gap: 8px; }
+    .chip { padding: 6px 10px; font-size: 10px; }
+    .chip .time { font-size: 12px; }
+    .wrap { padding: 4px 14px 14px; gap: 16px; }
+    .card { padding: 22px 20px 18px; }
+    .logo { font-size: 20px; letter-spacing: 3px; }
+    .badge-A { width: 120px; height: 120px; }
+    .badge-ring { width: 170px; height: 170px; }
+  }
+  footer b { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="bg-dots"></div>
+<canvas id="particles"></canvas>
+
+<div class="topbar">
+  <div class="chip"><span class="dot"></span> Proxies vivos <b id="liveCount">-</b></div>
+  <div class="chip">&#128337; <span><span class="time" id="clockTime">--:--:--</span><br/><span class="date" id="clockDate">-</span></span></div>
+  <div class="theme-toggle">
+    <button id="lightBtn" title="Claro">&#9728;</button>
+    <button id="darkBtn" title="Oscuro">&#127769;</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="card-frame">
+    <form class="card" id="loginForm">
+      <div class="logo">
+        <span class="letters" id="logoLetters1">AYLYES</span>
+        <div class="sublabel">PANEL — ACCESO PRIVADO</div>
+      </div>
+      <p class="tagline">Plataforma <b>profesional</b> de gestion de proxies</p>
+
+      <div class="field input-row">
+        <span class="icon">&#128100;</span>
+        <div class="input-col">
+          <label>Usuario</label>
+          <input type="text" id="username" autocomplete="username" required />
+        </div>
+      </div>
+
+      <div class="field input-row">
+        <span class="icon">&#128274;</span>
+        <div class="input-col">
+          <label>Clave</label>
+          <input type="password" id="password" autocomplete="current-password" required />
+        </div>
+        <span class="eye" id="eyeToggle">&#128065;</span>
+      </div>
+
+      <div class="row-between">
+        <label class="remember"><input type="checkbox" checked /> Recordarme</label>
+        <button type="button" class="forgot" id="forgotBtn">&iquest;Olvidaste tu clave?</button>
+      </div>
+
+      <div class="field input-row" id="otpField" style="display:none;">
+        <span class="icon">&#128274;</span>
+        <div class="input-col">
+          <label>Codigo enviado por Telegram</label>
+          <input type="text" id="otpCode" inputmode="numeric" maxlength="6" placeholder="000000" />
+        </div>
+      </div>
+
+      <button class="submit" type="submit" id="submitBtn"><span id="submitLabel">Iniciar sesion &rarr;</span></button>
+      <div class="error" id="errorMsg"></div>
+
+      <div class="divider">&iquest;NO TIENES CUENTA?</div>
+      <button type="button" class="key-btn" id="keyBtn">
+        <span class="icon">&#128273;</span> Registrarse <span class="chev" id="keyChev">&rsaquo;</span>
+      </button>
+
+      <div id="redeemPanel" style="display:none; margin-top:12px;">
+        <div class="field input-row">
+          <span class="icon">&#128273;</span>
+          <div class="input-col">
+            <label>Key (opcional)</label>
+            <input type="text" id="redeemCode" placeholder="AYLYES-XXXX-XXXX (si no tienes, dejalo vacio)" style="text-transform:uppercase;" />
+          </div>
+        </div>
+
+        <div id="linkStep">
+          <button class="key-btn" type="button" id="linkTelegramBtn">
+            <span class="icon">&#9993;</span> Verificar mi Telegram <span class="chev">&rsaquo;</span>
+          </button>
+          <div id="linkInstructions" style="display:none; font-size:12px; color:var(--muted); margin-top:10px; text-align:center; line-height:1.6;">
+            Manda este codigo al bot <b id="linkBotName" style="color:var(--text);"></b> en Telegram:
+            <div style="font-size:18px; font-weight:800; letter-spacing:2px; color:var(--cyan); margin:8px 0;" id="linkCodeDisplay"></div>
+            <span id="linkWaiting">Esperando confirmacion...</span>
+          </div>
+          <div class="error" id="linkError"></div>
+        </div>
+
+        <div id="redeemFields" style="display:none;">
+          <div class="field input-row">
+            <span class="icon">&#128100;</span>
+            <div class="input-col">
+              <label>Tu usuario (igual a tu @ de Telegram)</label>
+              <input type="text" id="redeemUsername" placeholder="sin @, tal cual tu usuario de Telegram" />
+            </div>
+          </div>
+          <div class="field input-row">
+            <span class="icon">&#128274;</span>
+            <div class="input-col">
+              <label>Elige tu clave</label>
+              <input type="password" id="redeemPassword" />
+            </div>
+          </div>
+          <div class="field input-row" id="redeemOtpField" style="display:none;">
+            <span class="icon">&#128274;</span>
+            <div class="input-col">
+              <label>Codigo enviado por Telegram</label>
+              <input type="text" id="redeemOtpCode" inputmode="numeric" maxlength="6" placeholder="000000" />
+            </div>
+          </div>
+          <button class="submit" type="button" id="redeemBtn"><span id="redeemLabel">Crear cuenta &rarr;</span></button>
+          <div class="error" id="redeemError"></div>
+        </div>
+      </div>
+
+      <div class="secure-note"><span class="dot">&#9989;</span> Conexion segura y cifrada</div>
+    </form>
+  </div>
+
+  <div class="promo">
+    <div class="promo-inner">
+      <div class="contact-label">Contactanos</div>
+      <a href="https://t.me/yesterwhite" target="_blank" rel="noopener noreferrer" class="telegram-tag">&#9993; TELEGRAM By @yesterWhite</a>
+      <div class="badge-ring"><div class="badge-A">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="aGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="var(--cyan)" />
+              <stop offset="100%" stop-color="var(--purple)" />
+            </linearGradient>
+          </defs>
+          <path d="M50 5 L91 92 L67 92 L50 56 L33 92 L9 92 Z" fill="url(#aGrad)" stroke-linejoin="round" />
+        </svg>
+      </div></div>
+      <div class="logo"><span class="letters" id="logoLetters2">AYLYES</span><span class="sublabel" style="justify-content:center;">PANEL</span></div>
+      <a href="https://t.me/Aylin24k" target="_blank" rel="noopener noreferrer" class="telegram-tag" style="margin-top:30px;">&#9993; TELEGRAM By @Aylin24k</a>
+    </div>
+  </div>
+</div>
+
+<footer>&copy; 2026 <b>AYLYES PANEL</b>. Todos los derechos reservados.</footer>
+
+<div class="success-overlay" id="successOverlay">
+  <div class="success-ring">&#10003;</div>
+  <div class="success-text">Bienvenido de vuelta</div>
+</div>
+
+<script>
+  document.querySelectorAll(".letters").forEach((el) => {
+    const text = el.textContent;
+    el.innerHTML = [...text].map((ch, i) =>
+      `<span style="animation-delay:${i * 0.12}s">${ch}</span>`
+    ).join("");
+  });
+
+  const root = document.documentElement;
+  const lightBtn = document.getElementById("lightBtn");
+  const darkBtn = document.getElementById("darkBtn");
+
+  function applyTheme(theme) {
+    if (theme === "dark") root.setAttribute("data-theme", "dark");
+    else root.removeAttribute("data-theme");
+    lightBtn.classList.toggle("active", theme !== "dark");
+    darkBtn.classList.toggle("active", theme === "dark");
+    localStorage.setItem("aylyes_theme", theme);
+  }
+  lightBtn.addEventListener("click", () => applyTheme("light"));
+  darkBtn.addEventListener("click", () => applyTheme("dark"));
+  applyTheme(localStorage.getItem("aylyes_theme") || "light");
+
+  function tickClock() {
+    const now = new Date();
+    document.getElementById("clockTime").textContent = now.toLocaleTimeString("es-MX", { hour12: false });
+    document.getElementById("clockDate").textContent = now.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  document.getElementById("eyeToggle").addEventListener("click", () => {
+    const pw = document.getElementById("password");
+    pw.type = pw.type === "password" ? "text" : "password";
+  });
+
+  document.getElementById("forgotBtn").addEventListener("click", () => {
+    alert("Pidele a tu administrador que te cambie la clave (node auth.js rename ...).");
+  });
+  document.getElementById("keyBtn").addEventListener("click", () => {
+    const panel = document.getElementById("redeemPanel");
+    const chev = document.getElementById("keyChev");
+    const show = panel.style.display === "none";
+    panel.style.display = show ? "block" : "none";
+    chev.innerHTML = show ? "&#9660;" : "&rsaquo;";
+  });
+
+  let verifiedLinkCode = null;
+  let linkPollTimer = null;
+  let redeemAwaitingOtp = false;
+
+  document.getElementById("linkTelegramBtn").addEventListener("click", async () => {
+    const btn = document.getElementById("linkTelegramBtn");
+    const errorMsg = document.getElementById("linkError");
+    errorMsg.textContent = "";
+    btn.disabled = true;
+
+    const res = await fetch("/api/telegram/start-link");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      errorMsg.textContent = data.error || "No se pudo iniciar la verificacion";
+      btn.disabled = false;
+      return;
+    }
+
+    document.getElementById("linkBotName").textContent = "@" + data.botUsername;
+    document.getElementById("linkCodeDisplay").textContent = data.code;
+    document.getElementById("linkInstructions").style.display = "block";
+    btn.style.display = "none";
+
+    if (linkPollTimer) clearInterval(linkPollTimer);
+    linkPollTimer = setInterval(async () => {
+      const r = await fetch("/api/telegram/link-status?code=" + encodeURIComponent(data.code));
+      const status = await r.json().catch(() => ({}));
+      if (status.linked) {
+        clearInterval(linkPollTimer);
+        verifiedLinkCode = data.code;
+        document.getElementById("linkWaiting").textContent = "Telegram verificado ✔";
+        document.getElementById("redeemFields").style.display = "block";
+      } else if (status.expired) {
+        clearInterval(linkPollTimer);
+        errorMsg.textContent = "El codigo vencio, intenta de nuevo.";
+        document.getElementById("linkInstructions").style.display = "none";
+        btn.style.display = "flex";
+        btn.disabled = false;
+      }
+    }, 3000);
+  });
+
+  document.getElementById("redeemBtn").addEventListener("click", async () => {
+    const code = document.getElementById("redeemCode").value.trim().toUpperCase();
+    const username = document.getElementById("redeemUsername").value.trim();
+    const password = document.getElementById("redeemPassword").value;
+    const otp = document.getElementById("redeemOtpCode").value.trim();
+    const errorMsg = document.getElementById("redeemError");
+    const btn = document.getElementById("redeemBtn");
+    const label = document.getElementById("redeemLabel");
+    errorMsg.textContent = "";
+
+    if (redeemAwaitingOtp) {
+      if (!otp) { errorMsg.textContent = "Ingresa el codigo que te mando el bot."; return; }
+      btn.disabled = true;
+      label.innerHTML = '<span class="spinner"></span> Verificando...';
+      const res = await fetch("/api/login/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, otp }),
+      });
+      if (res.ok) {
+        document.getElementById("successOverlay").classList.add("show");
+        burstParticles();
+        setTimeout(() => { window.location.href = "/"; }, 900);
+      } else {
+        btn.disabled = false;
+        label.textContent = "Verificar codigo →";
+        const data = await res.json().catch(() => ({}));
+        errorMsg.textContent = data.error || "Codigo incorrecto";
+      }
+      return;
+    }
+
+    if (!username || !password) {
+      errorMsg.textContent = "Completa usuario y clave.";
+      return;
+    }
+    if (!verifiedLinkCode) {
+      errorMsg.textContent = "Primero verifica tu Telegram.";
+      return;
+    }
+
+    btn.disabled = true;
+    label.innerHTML = '<span class="spinner"></span> Canjeando...';
+
+    const res = await fetch("/api/redeem", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code, username, password, linkCode: verifiedLinkCode }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok && data.otpRequired) {
+      redeemAwaitingOtp = true;
+      document.getElementById("redeemUsername").readOnly = true;
+      document.getElementById("redeemUsername").closest(".input-row").style.opacity = "0.6";
+      document.getElementById("redeemPassword").closest(".input-row").style.display = "none";
+      document.getElementById("redeemOtpField").style.display = "flex";
+      btn.disabled = false;
+      label.textContent = "Verificar codigo →";
+      errorMsg.textContent = "Cuenta creada. Te mandamos un codigo por Telegram.";
+      document.getElementById("redeemOtpCode").focus();
+    } else if (res.ok) {
+      document.getElementById("successOverlay").classList.add("show");
+      burstParticles();
+      setTimeout(() => { window.location.href = "/"; }, 900);
+    } else {
+      btn.disabled = false;
+      label.textContent = "Crear cuenta →";
+      errorMsg.textContent = data.error || "No se pudo canjear la key";
+    }
+  });
+
+  fetch("/api/public-stats").then(r => r.json()).then(d => {
+    document.getElementById("liveCount").textContent = d.liveProxies ?? "-";
+  }).catch(() => {});
+
+  if (new URLSearchParams(window.location.search).get("blocked") === "1") {
+    document.getElementById("errorMsg").textContent = "Tu cuenta esta bloqueada. Contacta al administrador.";
+  }
+
+  let awaitingOtp = false;
+
+  document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+    const otp = document.getElementById("otpCode").value.trim();
+    const errorMsg = document.getElementById("errorMsg");
+    const btn = document.getElementById("submitBtn");
+    const label = document.getElementById("submitLabel");
+    errorMsg.textContent = "";
+    btn.classList.add("loading");
+    btn.disabled = true;
+    label.innerHTML = '<span class="spinner"></span> Entrando...';
+
+    let res;
+    if (awaitingOtp) {
+      res = await fetch("/api/login/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, otp }),
+      });
+    } else {
+      res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+    }
+
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok && data.otpRequired) {
+      awaitingOtp = true;
+      document.getElementById("otpField").style.display = "flex";
+      document.getElementById("username").readOnly = true;
+      document.getElementById("password").closest(".input-row").style.display = "none";
+      btn.classList.remove("loading");
+      btn.disabled = false;
+      label.textContent = "Verificar codigo →";
+      errorMsg.textContent = "Te mandamos un codigo por Telegram.";
+      document.getElementById("otpCode").focus();
+    } else if (res.ok) {
+      document.getElementById("successOverlay").classList.add("show");
+      burstParticles();
+      setTimeout(() => { window.location.href = "/"; }, 900);
+    } else {
+      btn.classList.remove("loading");
+      btn.disabled = false;
+      label.textContent = awaitingOtp ? "Verificar codigo →" : "Iniciar sesion →";
+      errorMsg.textContent = data.error || "No se pudo entrar";
+    }
+  });
+
+  // ---- particulas de fondo (canvas liviano, sin librerias) ----
+  const canvas = document.getElementById("particles");
+  const ctx = canvas.getContext("2d");
+  let particles = [];
+  let burstParticlesQueue = [];
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+
+  function themeColors() {
+    const dark = root.getAttribute("data-theme") === "dark";
+    return dark ? ["41,245,255", "180,107,255"] : ["41,166,255", "168,77,255"];
+  }
+
+  function initParticles() {
+    particles = [];
+    const count = Math.min(70, Math.floor((window.innerWidth * window.innerHeight) / 18000));
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.25,
+        vy: (Math.random() - 0.5) * 0.25,
+        r: Math.random() * 2.2 + 1.2,
+      });
+    }
+  }
+  initParticles();
+  window.addEventListener("resize", initParticles);
+
+  function burstParticles() {
+    const cx = canvas.width / 2, cy = canvas.height / 2;
+    for (let i = 0; i < 60; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 2 + Math.random() * 4;
+      burstParticlesQueue.push({
+        x: cx, y: cy,
+        vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+        r: Math.random() * 2.5 + 1, life: 1,
+      });
+    }
+  }
+
+  function drawParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const [c1] = themeColors();
+
+    for (const p of particles) {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
+      if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${c1},0.7)`;
+      ctx.shadowColor = `rgba(${c1},0.8)`;
+      ctx.shadowBlur = 6;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    burstParticlesQueue = burstParticlesQueue.filter((p) => p.life > 0);
+    for (const p of burstParticlesQueue) {
+      p.x += p.vx; p.y += p.vy; p.life -= 0.02; p.vx *= 0.98; p.vy *= 0.98;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      const [c1b, c2b] = themeColors();
+      ctx.fillStyle = `rgba(${Math.random() > 0.5 ? c1b : c2b},${Math.max(p.life, 0)})`;
+      ctx.fill();
+    }
+
+    requestAnimationFrame(drawParticles);
+  }
+  drawParticles();
+</script>
+</body>
+</html>

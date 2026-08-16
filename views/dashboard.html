@@ -1,0 +1,1368 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AYLYES PANEL</title>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --panel: #ffffff;
+    --panel-2: #f8f9fd;
+    --border: #e2e6f0;
+    --text: #1a1e2c;
+    --muted: #7b8194;
+    --cyan: #29a6ff;
+    --purple: #a84dff;
+    --green: #22c58b;
+    --red: #ff5c7a;
+    --amber: #d98a1f;
+    --glow: 41,166,255;
+    --glow2: 168,77,255;
+    --shadow: rgba(20,30,70,0.22);
+    /* en claro los brillos translucidos casi no se ven sobre blanco, asi que
+       aqui usamos bordes/sombras mucho mas intensos para que se noten igual */
+    --glowBorder: 1;
+    --glowSoft: 0.22;
+    --glowMed: 0.8;
+    --glowStrong: 1;
+    --textGlow: 0.5;
+  }
+  [data-theme="dark"] {
+    --bg: #05060a;
+    --panel: #0d1018;
+    --panel-2: #10141f;
+    --border: #1e2536;
+    --text: #e7ecff;
+    --muted: #6d7690;
+    --cyan: #29f5ff;
+    --purple: #b46bff;
+    --green: #3ef5a0;
+    --red: #ff5c7a;
+    --amber: #ffb454;
+    --glow: 41,245,255;
+    --glow2: 180,107,255;
+    --shadow: rgba(0,0,0,0.5);
+    --glowBorder: 0.5;
+    --glowSoft: 0.06;
+    --glowMed: 0.35;
+    --glowStrong: 0.6;
+    --textGlow: 0.6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background:
+      radial-gradient(circle at 20% -10%, rgba(var(--glow),0.12), transparent 40%),
+      radial-gradient(circle at 90% 10%, rgba(var(--glow2),0.12), transparent 45%),
+      var(--bg);
+    color: var(--text);
+    background-attachment: fixed;
+    transition: background 0.25s, color 0.25s;
+  }
+  .bg-grid {
+    position: fixed; inset: 0; z-index: -2;
+    background-image:
+      linear-gradient(rgba(var(--glow),var(--glowSoft)) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(var(--glow),var(--glowSoft)) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: radial-gradient(circle at 50% 0%, black, transparent 75%);
+  }
+  #particles { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 32px; border-bottom: 1px solid var(--border);
+    background: rgba(var(--glow), var(--glowSoft));
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 12px var(--shadow);
+    position: relative;
+  }
+  header::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(var(--glow),0.9), rgba(var(--glow2),0.9), transparent);
+  }
+  .logo {
+    font-weight: 800; letter-spacing: 3px; font-size: 21px;
+  }
+  .logo .letters span {
+    display: inline-block;
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent; -webkit-text-fill-color: transparent;
+    animation: floatLetter 2.6s ease-in-out infinite;
+  }
+  @keyframes floatLetter {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+  .logo span.tagline-mini { color: var(--muted); font-weight: 400; letter-spacing: 1px; font-size: 12px; display: block; -webkit-text-fill-color: var(--muted); }
+  .hud { display: flex; gap: 18px; align-items: center; font-size: 12px; color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; box-shadow: 0 0 8px currentColor; }
+  .dot.live { color: var(--green); background: var(--green); }
+  .who { display: flex; align-items: center; gap: 10px; }
+  .who button {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    border-radius: 999px; padding: 5px 12px; font-size: 12px; cursor: pointer;
+  }
+
+  /* marquitos estilo neon: borde delgado + resplandor del color de acento */
+  .neon-box {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 600;
+    background: var(--panel-2);
+    border: 1.5px solid rgba(var(--glow),var(--glowBorder));
+    color: var(--cyan);
+    box-shadow: 0 0 8px rgba(var(--glow),var(--glowMed)), inset 0 0 8px rgba(var(--glow),var(--glowSoft)), 0 2px 8px var(--shadow);
+    text-shadow: 0 0 8px rgba(var(--glow),var(--textGlow));
+    transition: box-shadow 0.2s, transform 0.15s;
+  }
+  button.neon-box.neon-btn {
+    cursor: pointer; letter-spacing: 0.3px;
+  }
+  button.neon-box.neon-btn:hover {
+    box-shadow: 0 0 14px rgba(var(--glow),var(--glowStrong)), inset 0 0 10px rgba(var(--glow),var(--glowMed)), 0 2px 8px var(--shadow);
+    transform: translateY(-1px);
+  }
+  .neon-box.neon-danger {
+    border-color: rgba(255,92,122,var(--glowBorder)); color: var(--red);
+    box-shadow: 0 0 8px rgba(255,92,122,var(--glowMed)), inset 0 0 8px rgba(255,92,122,var(--glowSoft)), 0 2px 8px var(--shadow);
+    text-shadow: 0 0 8px rgba(255,92,122,var(--textGlow));
+  }
+  .neon-box.neon-danger:hover {
+    box-shadow: 0 0 14px rgba(255,92,122,var(--glowStrong)), inset 0 0 10px rgba(255,92,122,var(--glowMed)), 0 2px 8px var(--shadow);
+    transform: translateY(-1px);
+  }
+  .neon-box.neon-days {
+    border-color: rgba(var(--glow2),var(--glowBorder)); color: var(--purple);
+    box-shadow: 0 0 8px rgba(var(--glow2),var(--glowMed)), inset 0 0 8px rgba(var(--glow2),var(--glowSoft)), 0 2px 8px var(--shadow);
+    text-shadow: 0 0 8px rgba(var(--glow2),var(--textGlow));
+  }
+  .theme-toggle {
+    display: flex; align-items: center; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px; gap: 2px;
+    box-shadow: 0 4px 14px var(--shadow);
+  }
+  .theme-toggle button {
+    border: none; background: transparent; width: 28px; height: 28px; border-radius: 50%;
+    cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center;
+    color: var(--muted);
+  }
+  .theme-toggle button.active {
+    background: linear-gradient(135deg, var(--cyan), var(--purple)); color: #fff;
+  }
+
+  .tagline-strip {
+    text-align: center; padding: 9px 16px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
+    color: var(--cyan); border-bottom: 1px solid rgba(var(--glow),var(--glowBorder));
+    background: rgba(var(--glow),var(--glowSoft));
+    text-shadow: 0 0 8px rgba(var(--glow),var(--textGlow));
+  }
+  .tagline-strip::selection { background: rgba(var(--glow),0.3); }
+
+  main { padding: 32px; max-width: 1200px; margin: 0 auto; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  h1.title { font-size: 26px; margin: 0 0 6px; }
+  p.subtitle { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 30px;
+  }
+  .region-header {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--cyan); margin: 26px 0 14px; text-shadow: 0 0 10px rgba(var(--glow),var(--textGlow));
+  }
+  .region-header::before {
+    content: ""; width: 8px; height: 8px; border-radius: 2px;
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    box-shadow: 0 0 10px rgba(var(--glow),var(--glowStrong));
+    transform: rotate(45deg); flex-shrink: 0;
+  }
+  .region-header::after {
+    content: ""; flex: 1; height: 1.5px;
+    background: linear-gradient(90deg, rgba(var(--glow),var(--glowMed)), transparent);
+  }
+  .region-header:first-child { margin-top: 0; }
+  .country-card {
+    background: linear-gradient(160deg, var(--panel), var(--panel-2));
+    border: 1.5px solid rgba(var(--glow), calc(var(--glowBorder) * 0.4));
+    clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+    padding: 18px; cursor: pointer; position: relative; overflow: hidden;
+    box-shadow: 0 3px 14px var(--shadow), 0 0 0 1px rgba(var(--glow), calc(var(--glowSoft) * 0.6));
+    transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+  }
+  .country-card::after {
+    content: ""; position: absolute; top: 0; right: 0; width: 22px; height: 22px;
+    background: linear-gradient(135deg, transparent 50%, rgba(var(--glow),var(--glowStrong)) 50%);
+    box-shadow: -2px 2px 8px rgba(var(--glow), var(--glowMed));
+  }
+  .country-card::before {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(120deg, transparent 40%, rgba(var(--glow),0.25) 50%, transparent 60%);
+    transform: translateX(-120%);
+    transition: transform 0.6s;
+    pointer-events: none;
+  }
+  .country-card:hover::before { transform: translateX(120%); }
+  .country-card:hover {
+    transform: translateY(-4px) scale(1.015);
+    border-color: var(--cyan);
+    box-shadow: 0 16px 36px rgba(var(--glow),var(--glowMed)), 0 0 0 2px rgba(var(--glow),var(--glowBorder));
+  }
+  .country-card .code { font-size: 22px; font-weight: 700; letter-spacing: 1px; }
+  .country-card .name { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .country-card .count {
+    position: absolute; top: 14px; right: 14px; font-size: 11px;
+    background: rgba(62,245,160,0.12); color: var(--green);
+    padding: 3px 8px; border-radius: 999px;
+  }
+  .country-card .flag-corner {
+    position: absolute; bottom: 12px; right: 12px; font-size: 22px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
+  }
+  .country-card .risk-badge {
+    position: absolute; top: 40px; right: 14px; font-size: 10px; font-weight: 700;
+    background: rgba(var(--glow2),0.14); color: var(--purple);
+    padding: 2px 8px; border-radius: 999px;
+  }
+  .country-card .risk-badge.risk-clean {
+    background: rgba(62,245,160,0.16); color: var(--green);
+    box-shadow: 0 0 6px rgba(62,245,160,0.4);
+  }
+  .empty-note { color: var(--muted); font-size: 13px; padding: 30px; text-align: center; border: 1px dashed var(--border); border-radius: 12px; }
+
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none;
+    align-items: center; justify-content: center; z-index: 50;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 24px; width: 340px;
+  }
+  .modal h3 { margin: 0 0 6px; }
+  .modal p { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
+  .mode-btn {
+    display: block; width: 100%; text-align: left; background: var(--panel-2);
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+    color: var(--text); cursor: pointer; margin-bottom: 10px; font-size: 13px;
+  }
+  .mode-btn:hover { border-color: var(--cyan); }
+  .mode-btn b { display: block; margin-bottom: 3px; }
+  .mode-btn span { color: var(--muted); font-size: 11px; }
+
+  /* mockup estilo navegador (modo Chrome real) */
+  /* --- panel de administracion --- */
+  .admin-alert {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+    padding: 14px 18px; border-radius: 12px;
+    background: rgba(255,92,122,0.08); border: 1px solid rgba(255,92,122,0.4);
+    color: var(--red); font-size: 13px;
+  }
+  .usage-block { margin-bottom: 28px; }
+  .usage-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .usage-row b { color: var(--text); font-size: 13px; }
+  .usage-track {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 999px;
+    height: 12px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .usage-fill {
+    height: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    box-shadow: 0 0 12px rgba(var(--glow),var(--glowStrong));
+    transition: width 0.5s ease, background 0.4s;
+  }
+
+  .stat-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 14px; margin-bottom: 30px;
+  }
+  .stat-card {
+    background: linear-gradient(160deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--border); border-left: 3px solid var(--cyan);
+    border-radius: 12px; padding: 16px 18px; position: relative; overflow: hidden;
+    box-shadow: 0 2px 10px var(--shadow);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px var(--shadow), 0 0 0 1px rgba(var(--glow),var(--glowBorder)); }
+  .stat-card .stat-icon { font-size: 16px; margin-bottom: 8px; opacity: 0.9; }
+  .stat-card .stat-label { font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); }
+  .stat-card .stat-value { font-size: 20px; font-weight: 700; margin-top: 4px; }
+
+  .admin-panel {
+    border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+    background: var(--panel); margin-bottom: 20px;
+    box-shadow: 0 0 0 1px rgba(var(--glow),var(--glowSoft)), 0 16px 40px var(--shadow);
+  }
+  .admin-panel-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 20px; background: var(--panel-2); border-bottom: 1px solid var(--border);
+    font-size: 13px; font-weight: 800; letter-spacing: 0.5px;
+  }
+  .admin-panel-header::before {
+    content: ""; width: 7px; height: 7px; border-radius: 2px;
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    box-shadow: 0 0 8px rgba(var(--glow),var(--glowStrong)); transform: rotate(45deg); flex-shrink: 0;
+  }
+  .admin-panel-body { padding: 20px; }
+  .admin-panel-note { color: var(--muted); font-size: 12px; margin: 0 0 12px; }
+
+  .field-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+  .field-premium { display: flex; flex-direction: column; gap: 4px; }
+  .field-premium label {
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted);
+  }
+  .field-premium input, .field-premium textarea {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; color: var(--text); font-size: 13px; outline: none;
+    transition: border-color 0.15s;
+  }
+  .field-premium input:focus, .field-premium textarea:focus { border-color: var(--cyan); }
+
+  table.admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.admin-table thead th {
+    text-align: left; padding: 10px 20px; font-size: 10px; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border);
+  }
+  table.admin-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  table.admin-table tbody tr:last-child { border-bottom: none; }
+  table.admin-table tbody tr:hover { background: rgba(var(--glow),0.04); }
+  table.admin-table td { padding: 12px 20px; vertical-align: middle; }
+  .user-cell { display: flex; align-items: center; gap: 10px; }
+  .avatar-circle {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 12px;
+  }
+  .status-pill {
+    display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600;
+  }
+  .status-pill.unlimited { background: rgba(62,245,160,0.12); color: var(--green); }
+  .status-pill.remaining { background: rgba(var(--glow),0.12); color: var(--cyan); }
+  .status-pill.exhausted { background: rgba(255,92,122,0.12); color: var(--red); }
+
+  .browser-mock {
+    border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+    background: var(--panel);
+    box-shadow: 0 0 0 1px rgba(var(--glow),0.05), 0 20px 60px var(--shadow);
+  }
+  .mock-topbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; background: var(--panel-2); border-bottom: 1px solid var(--border);
+  }
+  .traffic { display: flex; gap: 6px; }
+  .traffic span { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .traffic .r { background: #ff5f57; } .traffic .y { background: #febc2e; } .traffic .g { background: #28c840; }
+  .mock-addr {
+    flex: 1; display: flex; align-items: center; gap: 8px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 999px;
+    padding: 8px 14px; font-size: 13px; color: var(--muted);
+  }
+  .mock-addr .lock { color: var(--green); }
+  .mock-addr .country-tag { color: var(--purple); font-weight: 700; margin-right: 4px; }
+  .mock-body { padding: 60px 30px; text-align: center; }
+  .pulse-icon {
+    width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(var(--glow),0.25), transparent 70%);
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--cyan);
+  }
+  .pulse-icon::after {
+    content: ""; width: 14px; height: 14px; border-radius: 50%;
+    background: var(--cyan); box-shadow: 0 0 16px var(--cyan);
+    animation: pulse 1.6s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .mock-body h2 { margin: 0 0 8px; font-size: 18px; }
+  .mock-body p { color: var(--muted); font-size: 13px; max-width: 480px; margin: 0 auto; }
+
+  /* modo navegador embebido (multiusuario remoto) */
+  .embed-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; background: var(--panel-2); border-bottom: 1px solid var(--border);
+  }
+  .embed-addr {
+    flex: 1; display: flex; align-items: center; gap: 8px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 999px;
+    padding: 8px 14px;
+  }
+  .embed-addr input { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-size: 13px; }
+  .go-btn {
+    background: linear-gradient(90deg, var(--cyan), var(--purple)); border: none;
+    color: #05060a; font-weight: 700; border-radius: 999px; padding: 8px 16px; cursor: pointer; font-size: 13px;
+  }
+  iframe.embed-frame { width: 100%; height: 65vh; border: none; background: #0a0c12; }
+
+  .status-strip {
+    display: flex; gap: 16px; align-items: center; font-size: 11px; color: var(--muted);
+    padding: 10px 16px; border-top: 1px solid var(--border); background: rgba(255,255,255,0.01);
+    flex-wrap: wrap;
+  }
+  .status-strip b { color: var(--cyan); }
+
+  .actions { display: flex; gap: 10px; margin-top: 18px; }
+  .btn {
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--text);
+    border-radius: 999px; padding: 9px 18px; cursor: pointer; font-size: 13px;
+  }
+  .btn.primary { background: linear-gradient(90deg, var(--cyan), var(--purple)); border: none; color: #05060a; font-weight: 700; }
+  .btn.danger { border-color: var(--red); color: var(--red); background: transparent; }
+
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--panel); border: 1px solid var(--cyan); border-radius: 10px;
+    padding: 12px 18px; font-size: 13px; box-shadow: 0 0 20px rgba(var(--glow),0.2);
+    opacity: 0; transform: translateY(10px); transition: all 0.25s; pointer-events: none;
+    max-width: 320px;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<canvas id="particles"></canvas>
+
+<header>
+  <div class="logo"><span class="letters" id="headerLetters">AYLYES</span><span class="tagline-mini">PANEL — proxy network</span></div>
+  <div class="hud">
+    <span class="neon-box" style="color:var(--green); border-color:rgba(62,245,160,0.5); box-shadow:0 0 6px rgba(62,245,160,0.35), inset 0 0 6px rgba(62,245,160,0.08); text-shadow:0 0 6px rgba(62,245,160,0.5);"><span class="dot live" id="poolDot"></span><span id="poolText">cargando pool...</span></span>
+    <div class="theme-toggle">
+      <button id="lightBtn" title="Claro">&#9728;</button>
+      <button id="darkBtn" title="Oscuro">&#127769;</button>
+    </div>
+    <div class="who">
+      <span class="neon-box" id="whoami"></span>
+      <span class="neon-box neon-days" id="daysLeft" style="display:none;"></span>
+      <button class="neon-box neon-btn" id="redeemKeyBtn" style="display:none;">&#128273; Canjear keys</button>
+      <a class="neon-box neon-btn neon-danger" id="buyPlanBtn" href="https://t.me/yesterwhite" target="_blank" rel="noopener noreferrer" style="display:none; text-decoration:none;">&#128176; Comprar plan</a>
+      <button class="neon-box neon-btn" id="adminBtn" style="display:none;">Admin</button>
+      <button class="neon-box neon-btn neon-danger" id="logoutBtn">Salir</button>
+    </div>
+  </div>
+</header>
+
+<div class="tagline-strip">IP limpia en cada acceso &bull; Renueva tu sesion &bull; Comienza limpio.</div>
+
+<main>
+  <section class="view active" id="pickerView">
+    <h1 class="title">Elige un pais</h1>
+    <p class="subtitle">Cambio automatico de IP si el proxy activo muere. Sesiones sin cookies previas cada vez.</p>
+    <div id="countryGrid">
+      <div class="empty-note">Buscando proxies vivos por pais...</div>
+    </div>
+  </section>
+
+  <section class="view" id="desktopView">
+    <h1 class="title" id="desktopTitle">Ventana activa</h1>
+    <p class="subtitle">La navegacion real pasa en la ventana de Chrome que se abrio aparte, en esta PC.</p>
+
+    <div class="browser-mock">
+      <div class="mock-topbar">
+        <div class="traffic"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <div class="mock-addr"><span class="lock">&#128274;</span><span class="country-tag" id="countryBadge"></span><span>chrome real — controlado por AYLYES</span></div>
+      </div>
+      <div class="mock-body">
+        <div class="pulse-icon"></div>
+        <h2>Chrome abierto</h2>
+        <p>Cambia de pestana a la ventana de Chrome que se acaba de abrir para navegar.</p>
+      </div>
+      <div class="status-strip">
+        <span>Proxy: <b id="proxyIp">-</b></span>
+        <span>Latencia: <b id="proxyLatency">-</b></span>
+        <span>Reemplazos: <b id="switchCount">0</b></span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="backBtn">&larr; paises</button>
+      <button class="btn primary" id="rotateBtn">&#8635; Cambiar IP</button>
+      <button class="btn danger" id="closeBtn">Cerrar esta ventana</button>
+    </div>
+  </section>
+
+  <section class="view" id="embedView">
+    <h1 class="title">Navegar — <span id="embedCountryBadge"></span> <span class="neon-box neon-days" id="sessionCountdown" style="font-size:12px;"></span></h1>
+    <p class="subtitle">Modo compatible remoto: funciona para cualquiera que entre a esta pagina, sin abrir ventanas locales.</p>
+
+    <div class="browser-mock">
+      <div class="embed-bar">
+        <div class="embed-addr">
+          <span class="lock">&#128274;</span>
+          <input id="embedUrlInput" type="text" value="https://example.com" />
+        </div>
+        <button class="go-btn" id="embedGoBtn">Ir</button>
+      </div>
+      <iframe class="embed-frame" id="embedFrame" src="about:blank"></iframe>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="embedBackBtn">&larr; paises</button>
+    </div>
+  </section>
+
+  <section class="view" id="adminView">
+    <h1 class="title">Administracion</h1>
+    <p class="subtitle">Consumo de tu cuenta de Webshare y usuarios con acceso al panel.</p>
+
+    <div class="admin-alert" id="guardBanner" style="display:none;">
+      &#9888; Auto-escaneo pausado: ya usaste <b id="guardPercentText"></b> de tu plan de Webshare. Se reanuda solo cuando baje el consumo (nuevo periodo de facturacion).
+    </div>
+
+    <div class="usage-block">
+      <div class="usage-row">
+        <span>Consumo del plan</span>
+        <b id="usageBarLabel">-</b>
+      </div>
+      <div class="usage-track"><div class="usage-fill" id="usageBarFill" style="width:0%;"></div></div>
+    </div>
+
+    <div class="stat-grid" id="statsGrid">
+      <div class="empty-note">Cargando estadisticas de Webshare...</div>
+    </div>
+
+    <div class="admin-panel">
+      <div class="admin-panel-header">Agregar usuario</div>
+      <form id="createUserForm" class="admin-panel-body field-row">
+        <div class="field-premium">
+          <label>Usuario</label>
+          <input id="newUsername" required />
+        </div>
+        <div class="field-premium">
+          <label>Clave</label>
+          <input id="newPassword" required />
+        </div>
+        <div class="field-premium">
+          <label>Sesiones (vacio = ilimitadas, 10 min c/u)</label>
+          <input id="newSessions" type="number" min="1" style="width:140px;" />
+        </div>
+        <button class="btn primary" type="submit">Crear usuario</button>
+      </form>
+    </div>
+
+    <div class="admin-panel">
+      <div class="admin-panel-header">Usuarios</div>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Acceso</th>
+            <th>Creado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="admin-panel">
+      <div class="admin-panel-header">Regalar Keys</div>
+      <form id="createKeyForm" class="admin-panel-body field-row">
+        <p class="admin-panel-note" style="width:100%;">
+          Genera una key de un solo uso que le regala esa cantidad de sesiones a quien la canjee para crear su propia cuenta (sin que se la crees tu). Compartela por Telegram/WhatsApp.
+        </p>
+        <div class="field-premium">
+          <label>Sesiones a regalar</label>
+          <input id="newKeySessions" type="number" min="1" value="10" style="width:140px;" />
+        </div>
+        <button class="btn" type="button" data-quick-sessions="1">1</button>
+        <button class="btn" type="button" data-quick-sessions="10">10</button>
+        <button class="btn" type="button" data-quick-sessions="20">20</button>
+        <button class="btn primary" type="submit">Generar key</button>
+      </form>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>Sesiones</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="keysTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="admin-panel">
+      <div class="admin-panel-header">Paises activos</div>
+      <form id="countriesForm" class="admin-panel-body">
+        <p class="admin-panel-note">
+          Codigos ISO separados por coma (ej: MX, US, AR). Menos paises = escaneos mas baratos en banda. Vacio = todos los disponibles.
+        </p>
+        <div class="field-premium">
+          <textarea id="countriesInput" rows="3"></textarea>
+        </div>
+        <button class="btn primary" type="submit" style="margin-top:12px;">Guardar y actualizar pool</button>
+      </form>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="adminBackBtn">&larr; paises</button>
+    </div>
+  </section>
+</main>
+
+<div class="modal-backdrop" id="modeModal">
+  <div class="modal">
+    <h3>Elige el modo</h3>
+    <p>Para el pais <b id="modalCountry"></b></p>
+    <button class="mode-btn" id="modeDesktop">
+      <b>Chrome real (solo esta PC)</b>
+      <span>Ventana de navegador de verdad, mejor compatibilidad, pero solo la ves en esta computadora.</span>
+    </button>
+    <button class="mode-btn" id="modeEmbed">
+      <b>Navegar aqui (compatible remoto)</b>
+      <span>Funciona para cualquiera que entre al panel, incluidos amigos conectados desde otro lugar.</span>
+    </button>
+    <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); margin:2px 0 12px;">
+      <input type="checkbox" id="freeOnlyToggle" />
+      Forzar solo proxies gratuitos (para probar su calidad, sin usar Webshare)
+    </label>
+    <button class="btn" id="modalCancel" style="width:100%;margin-top:6px;">Cancelar</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="redeemKeyModal">
+  <div class="modal">
+    <h3>Canjear key</h3>
+    <p>Suma sesiones a tu cuenta con una key valida.</p>
+    <div class="field-premium" style="margin-bottom:16px;">
+      <label>Key</label>
+      <input type="text" id="redeemKeyInput" placeholder="AYLYES-XXXX-XXXX" style="text-transform:uppercase;" />
+    </div>
+    <div class="error" id="redeemKeyError" style="color:var(--red); font-size:12px; min-height:14px; margin-bottom:10px;"></div>
+    <button class="btn primary" id="redeemKeyConfirm" style="width:100%;">Canjear &rarr;</button>
+    <button class="btn" id="redeemKeyCancel" style="width:100%;margin-top:8px;">Cancelar</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="adminActionModal">
+  <div class="modal">
+    <h3 id="adminActionTitle">Accion</h3>
+    <p id="adminActionMsg"></p>
+    <div class="field-premium" id="adminActionField" style="margin-bottom:16px;">
+      <label id="adminActionLabel">Cantidad</label>
+      <input type="text" id="adminActionInput" />
+    </div>
+    <div class="error" id="adminActionError" style="color:var(--red); font-size:12px; min-height:14px; margin-bottom:10px;"></div>
+    <button class="btn primary" id="adminActionConfirm" style="width:100%;">Confirmar &rarr;</button>
+    <button class="btn" id="adminActionCancel" style="width:100%;margin-top:8px;">Cancelar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // separa "AYLYES" en letras individuales para la animacion flotante
+  document.querySelectorAll(".letters").forEach((el) => {
+    const text = el.textContent;
+    el.innerHTML = [...text].map((ch, i) =>
+      `<span style="animation-delay:${i * 0.12}s">${ch}</span>`
+    ).join("");
+  });
+
+  // particulas de fondo (canvas liviano, sin librerias)
+  (function initParticlesBg() {
+    const canvas = document.getElementById("particles");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let particles = [];
+
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resize();
+    window.addEventListener("resize", () => { resize(); seed(); });
+
+    function themeColor() {
+      const dark = document.documentElement.getAttribute("data-theme") === "dark";
+      return dark ? "41,245,255" : "41,166,255";
+    }
+    function seed() {
+      const count = Math.min(50, Math.floor((window.innerWidth * window.innerHeight) / 26000));
+      particles = Array.from({ length: count }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.2,
+        vy: (Math.random() - 0.5) * 0.2,
+        r: Math.random() * 1.8 + 0.8,
+      }));
+    }
+    seed();
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const c = themeColor();
+      for (const p of particles) {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${c},0.5)`;
+        ctx.fill();
+      }
+      requestAnimationFrame(draw);
+    }
+    draw();
+  })();
+
+  (function () {
+    const root = document.documentElement;
+    const lightBtn = document.getElementById("lightBtn");
+    const darkBtn = document.getElementById("darkBtn");
+    function applyTheme(theme) {
+      if (theme === "dark") root.setAttribute("data-theme", "dark");
+      else root.removeAttribute("data-theme");
+      lightBtn.classList.toggle("active", theme !== "dark");
+      darkBtn.classList.toggle("active", theme === "dark");
+      localStorage.setItem("aylyes_theme", theme);
+    }
+    lightBtn.addEventListener("click", () => applyTheme("light"));
+    darkBtn.addEventListener("click", () => applyTheme("dark"));
+    applyTheme(localStorage.getItem("aylyes_theme") || "light");
+  })();
+
+  const pickerView = document.getElementById("pickerView");
+  const desktopView = document.getElementById("desktopView");
+  const embedView = document.getElementById("embedView");
+  const countryGrid = document.getElementById("countryGrid");
+  const poolText = document.getElementById("poolText");
+  const toast = document.getElementById("toast");
+  const modeModal = document.getElementById("modeModal");
+
+  // nombres de pais completos para cualquier codigo ISO, sin tener que
+  // mantener una lista a mano (el navegador ya trae esta base de datos)
+  const regionNames = typeof Intl !== "undefined" && Intl.DisplayNames
+    ? new Intl.DisplayNames(["es"], { type: "region" })
+    : null;
+  function countryName(code) {
+    try {
+      const name = regionNames && regionNames.of(code);
+      return name && name !== code ? name : "Pais " + code;
+    } catch {
+      return "Pais " + code;
+    }
+  }
+  // convierte el codigo ISO (ej "MX") a la bandera emoji correspondiente
+  function flagEmoji(code) {
+    if (!code || code.length !== 2) return "";
+    return [...code.toUpperCase()].map(ch => String.fromCodePoint(127397 + ch.charCodeAt(0))).join("");
+  }
+
+  // agrupa paises por region para que el panel se vea ordenado en vez de
+  // una sola lista plana
+  const REGION_MAP = {
+    "Latinoamerica": ["AR","BO","BR","CL","CO","CR","CU","EC","SV","GT","HT","HN","MX","NI","PA","PY","PE","DO","UY","VE"],
+    "Norteamerica": ["CA","US"],
+    "Europa": ["DE","AT","BE","FR","LI","LU","MC","NL","CH","GB","ES","IT","PT","IE","PL"],
+    "Nordicos": ["NO","SE","FI","DK","IS"],
+    "Asia del Sur": ["AF","MV","IN","PK","BD","NP","LK"],
+    "Medio Oriente / Africa": ["LY","EG","SA","AE","MA","ZA","IQ","IR"],
+  };
+  const REGION_ORDER = ["Latinoamerica", "Norteamerica", "Europa", "Nordicos", "Asia del Sur", "Medio Oriente / Africa", "Otros"];
+  function regionOf(code) {
+    for (const [region, codes] of Object.entries(REGION_MAP)) {
+      if (codes.includes(code)) return region;
+    }
+    return "Otros";
+  }
+
+  let currentCountry = null;
+  let pendingCountry = null;
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 4000);
+  }
+
+  const adminView = document.getElementById("adminView");
+
+  function showView(view) {
+    [pickerView, desktopView, embedView, adminView].forEach(v => v.classList.remove("active"));
+    view.classList.add("active");
+  }
+
+  async function loadWhoami() {
+    const res = await fetch("/api/me");
+    const data = await res.json();
+    if (!data.username) {
+      // la cuenta ya no existe o la bloquearon: fuera del panel
+      window.location.href = "/login.html" + (data.blocked ? "?blocked=1" : "");
+      return;
+    }
+    document.getElementById("whoami").textContent = data.username ? `@${data.username}` : "";
+    if (data.isAdmin) {
+      document.getElementById("adminBtn").style.display = "inline-block";
+    }
+
+    const daysEl = document.getElementById("daysLeft");
+    const buyPlanBtn = document.getElementById("buyPlanBtn");
+    const redeemKeyBtn = document.getElementById("redeemKeyBtn");
+    if (data.username) {
+      daysEl.style.display = "inline-flex";
+      if (data.isAdmin || data.sessionCredits === null || data.sessionCredits === undefined) {
+        daysEl.textContent = "Sesiones: ilimitadas";
+        buyPlanBtn.style.display = "none";
+        redeemKeyBtn.style.display = "none";
+      } else {
+        daysEl.textContent = `${data.sessionCredits} sesion${data.sessionCredits === 1 ? "" : "es"} restante${data.sessionCredits === 1 ? "" : "s"}`;
+        redeemKeyBtn.style.display = "inline-block";
+        buyPlanBtn.style.display = data.sessionCredits <= 0 ? "inline-block" : "none";
+      }
+    }
+  }
+
+  const redeemKeyModal = document.getElementById("redeemKeyModal");
+  const redeemKeyInput = document.getElementById("redeemKeyInput");
+  const redeemKeyError = document.getElementById("redeemKeyError");
+  const redeemKeyConfirm = document.getElementById("redeemKeyConfirm");
+
+  document.getElementById("redeemKeyBtn").addEventListener("click", () => {
+    redeemKeyInput.value = "";
+    redeemKeyError.textContent = "";
+    redeemKeyModal.classList.add("show");
+    redeemKeyInput.focus();
+  });
+  document.getElementById("redeemKeyCancel").addEventListener("click", () => {
+    redeemKeyModal.classList.remove("show");
+  });
+  redeemKeyInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") redeemKeyConfirm.click();
+  });
+
+  redeemKeyConfirm.addEventListener("click", async () => {
+    const code = redeemKeyInput.value.trim();
+    redeemKeyError.textContent = "";
+    if (!code) {
+      redeemKeyError.textContent = "Pon tu key.";
+      return;
+    }
+    redeemKeyConfirm.disabled = true;
+    redeemKeyConfirm.textContent = "Canjeando...";
+
+    const res = await fetch("/api/keys/redeem", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    const data = await res.json().catch(() => ({}));
+
+    redeemKeyConfirm.disabled = false;
+    redeemKeyConfirm.textContent = "Canjear →";
+
+    if (res.ok) {
+      redeemKeyModal.classList.remove("show");
+      showToast(`Key canjeada. Ahora tienes ${data.sessionCredits} sesiones disponibles.`);
+      loadWhoami();
+    } else {
+      redeemKeyError.textContent = data.error || "No se pudo canjear la key";
+    }
+  });
+
+  document.getElementById("adminBtn").addEventListener("click", () => {
+    showView(adminView);
+    loadAdminStats();
+    loadAdminUsers();
+    loadCountrySettings();
+    loadKeys();
+  });
+
+  document.querySelectorAll("[data-quick-sessions]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.getElementById("newKeySessions").value = btn.dataset.quickSessions;
+    });
+  });
+
+  document.getElementById("createKeyForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const sessions = document.getElementById("newKeySessions").value;
+    const res = await fetch("/api/admin/keys", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessions }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || "No se pudo generar la key"); return; }
+    showToast(`Key generada: ${data.code}`);
+    loadKeys();
+  });
+
+  async function loadKeys() {
+    const tbody = document.getElementById("keysTableBody");
+    const res = await fetch("/api/admin/keys");
+    const keys = await res.json();
+    if (!res.ok) return;
+
+    tbody.innerHTML = keys.slice().reverse().map(k => `
+      <tr>
+        <td style="font-family:monospace; font-size:12px;">${k.code}</td>
+        <td>${k.sessions}</td>
+        <td>
+          ${k.redeemedBy
+            ? `<span class="status-pill exhausted">Usada por ${k.redeemedBy}</span>`
+            : '<span class="status-pill unlimited">Disponible</span>'}
+        </td>
+        <td style="text-align:right;">
+          ${!k.redeemedBy ? `
+            <button class="btn" style="padding:4px 10px;font-size:11px;" data-copy="${k.code}">Copiar</button>
+            <button class="btn danger" style="padding:4px 10px;font-size:11px;" data-revoke="${k.code}">Borrar</button>
+          ` : ""}
+        </td>
+      </tr>
+    `).join("");
+
+    tbody.querySelectorAll("[data-copy]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        navigator.clipboard.writeText(btn.dataset.copy).catch(() => {});
+        showToast("Key copiada al portapapeles");
+      });
+    });
+    tbody.querySelectorAll("[data-revoke]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        await fetch(`/api/admin/keys/${btn.dataset.revoke}`, { method: "DELETE" });
+        showToast("Key borrada");
+        loadKeys();
+      });
+    });
+  }
+  document.getElementById("adminBackBtn").addEventListener("click", () => { showView(pickerView); loadCountries(); });
+
+  async function loadCountrySettings() {
+    const res = await fetch("/api/admin/settings");
+    const data = await res.json();
+    document.getElementById("countriesInput").value = (data.activeCountries || []).join(", ");
+  }
+
+  document.getElementById("countriesForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const raw = document.getElementById("countriesInput").value;
+    const activeCountries = raw.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
+    showToast("Actualizando pool con los paises nuevos...");
+    const res = await fetch("/api/admin/settings", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ activeCountries }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || "No se pudo guardar"); return; }
+    showToast("Paises actualizados. Pool refrescado.");
+  });
+
+  function formatBytes(bytes) {
+    if (!bytes) return "0 MB";
+    const mb = bytes / (1024 * 1024);
+    return mb >= 1024 ? (mb / 1024).toFixed(2) + " GB" : mb.toFixed(1) + " MB";
+  }
+
+  async function loadAdminStats() {
+    const grid = document.getElementById("statsGrid");
+    grid.innerHTML = '<div class="empty-note">Cargando estadisticas de Webshare...</div>';
+    const res = await fetch("/api/admin/webshare-stats");
+    const data = await res.json();
+    if (!res.ok) { grid.innerHTML = `<div class="empty-note">${data.error || "No se pudo cargar el consumo"}</div>`; return; }
+
+    const s = data.stats || {};
+    const limits = data.limits || {};
+    const guard = data.guard || {};
+    const cards = [
+      { icon: "&#128202;", label: "Consumo usado", value: formatBytes(s.bandwidthUsedBytes), color: "var(--cyan)" },
+      { icon: "&#128225;", label: "Peticiones totales", value: (s.requestsTotal || 0).toLocaleString(), color: "var(--purple)" },
+      { icon: "&#9989;", label: "Exitosas", value: (s.requestsSuccessful || 0).toLocaleString(), color: "var(--green)" },
+      { icon: "&#10060;", label: "Fallidas", value: (s.requestsFailed || 0).toLocaleString(), color: "var(--red)" },
+      { icon: "&#128197;", label: "Periodo termina", value: limits.periodEndsAt ? new Date(limits.periodEndsAt).toLocaleDateString() : "-", color: "var(--amber)" },
+    ];
+    grid.innerHTML = cards.map(c => `
+      <div class="stat-card" style="border-left-color:${c.color};">
+        <div class="stat-icon">${c.icon}</div>
+        <div class="stat-label">${c.label}</div>
+        <div class="stat-value">${c.value}</div>
+      </div>
+    `).join("");
+
+    const pct = guard.percent != null ? guard.percent : (limits.bandwidthLimitGb ? (s.bandwidthUsedBytes || 0) / (limits.bandwidthLimitGb * 1024 * 1024 * 1024) : null);
+    const bar = document.getElementById("usageBarFill");
+    const label = document.getElementById("usageBarLabel");
+    if (pct == null) {
+      label.textContent = "sin datos de limite";
+      bar.style.width = "0%";
+    } else {
+      const pctClamped = Math.min(pct, 1);
+      bar.style.width = (pctClamped * 100).toFixed(1) + "%";
+      bar.style.background = pct >= 0.9 ? "var(--red)" : pct >= 0.7 ? "var(--amber)" : "var(--green)";
+      label.textContent = `${(pct * 100).toFixed(1)}% de ${limits.bandwidthLimitGb} GB`;
+    }
+
+    document.getElementById("guardBanner").style.display = guard.tripped ? "block" : "none";
+    if (guard.tripped) {
+      document.getElementById("guardPercentText").textContent = (guard.percent * 100).toFixed(1) + "%";
+    }
+  }
+
+  async function loadAdminUsers() {
+    const tbody = document.getElementById("usersTableBody");
+    const res = await fetch("/api/admin/users");
+    const users = await res.json();
+    if (!res.ok) return;
+
+    tbody.innerHTML = users.map(u => {
+      const initial = u.username.charAt(0).toUpperCase();
+      const access = u.isBlocked
+        ? '<span class="status-pill exhausted">Bloqueado</span>'
+        : u.sessionCredits === null || u.sessionCredits === undefined
+        ? '<span class="status-pill unlimited">Ilimitadas</span>'
+        : u.sessionCredits <= 0
+        ? '<span class="status-pill exhausted">Agotadas</span>'
+        : `<span class="status-pill remaining">${u.sessionCredits} restantes</span>`;
+      return `
+      <tr>
+        <td>
+          <div class="user-cell">
+            <div class="avatar-circle">${initial}</div>
+            <span>${u.username}${u.isAdmin ? ' <span class="status-pill unlimited" style="margin-left:6px;">Admin</span>' : ""}</span>
+          </div>
+        </td>
+        <td>${access}</td>
+        <td style="color:var(--muted);">${new Date(u.createdAt).toLocaleDateString()}</td>
+        <td style="text-align:right; white-space:nowrap;">
+          ${!u.isAdmin ? `
+            <button class="btn" style="padding:4px 10px;font-size:11px;" data-addsessions="${u.username}">+ Sesiones</button>
+            <button class="btn" style="padding:4px 10px;font-size:11px;" data-reset="${u.username}">Resetear</button>
+            <button class="btn" style="padding:4px 10px;font-size:11px;" data-toggleblock="${u.username}" data-blocked="${u.isBlocked ? "1" : "0"}">${u.isBlocked ? "Desbloquear" : "Bloquear"}</button>
+            <button class="btn danger" style="padding:4px 10px;font-size:11px;" data-remove="${u.username}">Borrar</button>
+          ` : ""}
+        </td>
+      </tr>
+    `;
+    }).join("");
+
+    tbody.querySelectorAll("[data-addsessions]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const username = btn.dataset.addsessions;
+        const amount = await askAdminAction({
+          title: "Agregar sesiones", msg: `Cuantas sesiones sumarle a ${username}?`,
+          withInput: true, inputLabel: "Cantidad", inputValue: "10", confirmLabel: "Agregar →",
+        });
+        if (amount === null) return;
+        if (!amount || isNaN(Number(amount))) return showToast("Pon un numero valido");
+        await fetch(`/api/admin/users/${username}/addsessions`, {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amount: Number(amount) }),
+        });
+        showToast(`+${amount} sesiones para ${username}`);
+        loadAdminUsers();
+      });
+    });
+    tbody.querySelectorAll("[data-reset]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const username = btn.dataset.reset;
+        const ok = await askAdminAction({
+          title: "Resetear sesiones", msg: `Esto deja a ${username} en 0 sesiones (sin acceso hasta que le agregues mas).`,
+          withInput: false, confirmLabel: "Resetear →",
+        });
+        if (!ok) return;
+        await fetch(`/api/admin/users/${username}/set-sessions`, {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amount: 0 }),
+        });
+        showToast(`Sesiones de ${username} reseteadas a 0`);
+        loadAdminUsers();
+      });
+    });
+    tbody.querySelectorAll("[data-toggleblock]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const username = btn.dataset.toggleblock;
+        const nowBlocked = btn.dataset.blocked === "1";
+        const action = nowBlocked ? "unblock" : "block";
+        const ok = await askAdminAction({
+          title: nowBlocked ? "Desbloquear cuenta" : "Bloquear cuenta",
+          msg: nowBlocked ? `${username} podra volver a entrar al panel.` : `${username} ya no podra iniciar sesion hasta que lo desbloquees.`,
+          withInput: false, confirmLabel: nowBlocked ? "Desbloquear →" : "Bloquear →",
+        });
+        if (!ok) return;
+        await fetch(`/api/admin/users/${username}/${action}`, { method: "POST" });
+        showToast(nowBlocked ? `${username} desbloqueado` : `${username} bloqueado`);
+        loadAdminUsers();
+      });
+    });
+    tbody.querySelectorAll("[data-remove]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const username = btn.dataset.remove;
+        const ok = await askAdminAction({
+          title: "Borrar cuenta", msg: `Esto elimina a ${username} para siempre. No se puede deshacer.`,
+          withInput: false, confirmLabel: "Borrar →",
+        });
+        if (!ok) return;
+        await fetch(`/api/admin/users/${username}`, { method: "DELETE" });
+        showToast(`Usuario ${username} borrado`);
+        loadAdminUsers();
+      });
+    });
+  }
+
+  // modal generico para acciones de admin (reemplaza confirm()/prompt() del
+  // navegador, que se veian feos y no coincidian con el estilo de la pagina)
+  function askAdminAction({ title, msg, withInput, inputLabel, inputValue, confirmLabel }) {
+    return new Promise((resolve) => {
+      const modal = document.getElementById("adminActionModal");
+      const field = document.getElementById("adminActionField");
+      const input = document.getElementById("adminActionInput");
+      const error = document.getElementById("adminActionError");
+      const confirmBtn = document.getElementById("adminActionConfirm");
+      const cancelBtn = document.getElementById("adminActionCancel");
+
+      document.getElementById("adminActionTitle").textContent = title;
+      document.getElementById("adminActionMsg").textContent = msg;
+      document.getElementById("adminActionLabel").textContent = inputLabel || "Cantidad";
+      field.style.display = withInput ? "flex" : "none";
+      input.value = withInput ? (inputValue || "") : "";
+      error.textContent = "";
+      confirmBtn.textContent = confirmLabel || "Confirmar →";
+      modal.classList.add("show");
+      if (withInput) setTimeout(() => input.focus(), 50);
+
+      function cleanup(result) {
+        modal.classList.remove("show");
+        confirmBtn.removeEventListener("click", onConfirm);
+        cancelBtn.removeEventListener("click", onCancel);
+        input.removeEventListener("keydown", onKeydown);
+        resolve(result);
+      }
+      function onConfirm() { cleanup(withInput ? input.value.trim() : true); }
+      function onCancel() { cleanup(null); }
+      function onKeydown(e) { if (e.key === "Enter") onConfirm(); }
+
+      confirmBtn.addEventListener("click", onConfirm);
+      cancelBtn.addEventListener("click", onCancel);
+      input.addEventListener("keydown", onKeydown);
+    });
+  }
+
+  document.getElementById("createUserForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = document.getElementById("newUsername").value.trim();
+    const password = document.getElementById("newPassword").value;
+    const sessions = document.getElementById("newSessions").value;
+    const res = await fetch("/api/admin/users", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password, sessions: sessions || null }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || "No se pudo crear el usuario"); return; }
+    showToast(`Usuario ${username} creado`);
+    document.getElementById("createUserForm").reset();
+    loadAdminUsers();
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await fetch("/api/logout", { method: "POST" });
+    window.location.href = "/login.html";
+  });
+
+  async function loadCountries() {
+    const res = await fetch("/api/proxies");
+    const data = await res.json();
+    const trusted = data.proxies.filter(p => p.quality === "elite" || p.quality === "confiable" || p.quality === "premium").length;
+    poolText.textContent = `${data.total} proxies vivos (${trusted} confiables)${data.status !== "idle" ? " (" + data.status + "...)" : ""}`;
+
+    const counts = {};
+    const minRisk = {};
+    for (const p of data.proxies) {
+      if (!p.country || p.country === "??") continue;
+      counts[p.country] = (counts[p.country] || 0) + 1;
+      if (p.riskScore != null) {
+        minRisk[p.country] = minRisk[p.country] == null ? p.riskScore : Math.min(minRisk[p.country], p.riskScore);
+      }
+    }
+    const countries = Object.keys(counts);
+
+    if (!countries.length) {
+      countryGrid.innerHTML = '<div class="empty-note">Todavia no hay proxies vivos confirmados. Espera el primer escaneo...</div>';
+      return;
+    }
+
+    const byRegion = {};
+    for (const c of countries) {
+      const region = regionOf(c);
+      (byRegion[region] = byRegion[region] || []).push(c);
+    }
+    for (const region of Object.keys(byRegion)) {
+      byRegion[region].sort((a, b) => counts[b] - counts[a]);
+    }
+
+    countryGrid.innerHTML = REGION_ORDER
+      .filter((region) => byRegion[region] && byRegion[region].length)
+      .map((region) => `
+        <div class="region-header">${region}</div>
+        <div class="grid">
+          ${byRegion[region].map(c => `
+            <div class="country-card" data-country="${c}">
+              <div class="flag-corner">${flagEmoji(c)}</div>
+              <div class="count">${counts[c]} vivos</div>
+              ${minRisk[c] != null ? `<div class="risk-badge ${minRisk[c] === 0 ? 'risk-clean' : ''}">Fraude: ${minRisk[c]}</div>` : ""}
+              <div class="code">${c}</div>
+              <div class="name">${countryName(c)}</div>
+            </div>
+          `).join("")}
+        </div>
+      `).join("");
+
+    countryGrid.querySelectorAll(".country-card").forEach(card => {
+      card.addEventListener("click", () => {
+        pendingCountry = card.dataset.country;
+        document.getElementById("modalCountry").textContent = pendingCountry;
+        modeModal.classList.add("show");
+      });
+    });
+  }
+
+  document.getElementById("modalCancel").addEventListener("click", () => modeModal.classList.remove("show"));
+  document.getElementById("modeDesktop").addEventListener("click", () => {
+    const freeOnly = document.getElementById("freeOnlyToggle").checked;
+    modeModal.classList.remove("show");
+    openDesktop(pendingCountry, freeOnly);
+  });
+  document.getElementById("modeEmbed").addEventListener("click", () => {
+    const freeOnly = document.getElementById("freeOnlyToggle").checked;
+    modeModal.classList.remove("show");
+    openEmbed(pendingCountry, freeOnly);
+  });
+
+  // ---- modo Chrome real ----
+  async function openDesktop(country, freeOnly) {
+    showToast(`Abriendo Chrome real para ${country}${freeOnly ? " (solo gratuitos)" : ""}... puede tardar unos segundos`);
+    const res = await fetch(`/api/desktop/open?country=${country}${freeOnly ? "&free=1" : ""}`);
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || "No se pudo abrir la ventana"); return; }
+
+    currentCountry = country;
+    document.getElementById("countryBadge").textContent = country;
+    document.getElementById("desktopTitle").textContent = `${country} — sesion activa`;
+    updateStatus(data.proxy, data.switches);
+    showView(desktopView);
+    lastSwitches = 0;
+    pollStatus();
+  }
+
+  function updateStatus(proxy, switches) {
+    document.getElementById("proxyIp").textContent = proxy ? proxy.ip : "-";
+    document.getElementById("proxyLatency").textContent = proxy && proxy.latencyMs ? proxy.latencyMs + " ms" : "-";
+    document.getElementById("switchCount").textContent = switches || 0;
+  }
+
+  document.getElementById("backBtn").addEventListener("click", () => { showView(pickerView); loadCountries(); });
+
+  document.getElementById("rotateBtn").addEventListener("click", async () => {
+    if (!currentCountry) return;
+    const btn = document.getElementById("rotateBtn");
+    btn.disabled = true;
+    btn.textContent = "Cambiando IP...";
+    const res = await fetch(`/api/desktop/rotate?country=${currentCountry}`, { method: "POST" });
+    const data = await res.json();
+    btn.disabled = false;
+    btn.innerHTML = "&#8635; Cambiar IP";
+    if (!res.ok) { showToast(data.error || "No se pudo cambiar de IP"); return; }
+    updateStatus(data.proxy, data.switches);
+    lastSwitches = data.switches;
+    showToast(`IP cambiada a ${data.proxy.ip}`);
+  });
+
+  document.getElementById("closeBtn").addEventListener("click", async () => {
+    if (!currentCountry) return;
+    await fetch(`/api/desktop/close?country=${currentCountry}`, { method: "POST" });
+    showToast(`Ventana de ${currentCountry} cerrada`);
+    showView(pickerView);
+    loadCountries();
+  });
+
+  let lastSwitches = 0;
+  async function pollStatus() {
+    if (!desktopView.classList.contains("active") || !currentCountry) return;
+    const res = await fetch(`/api/desktop/status?country=${currentCountry}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (!data.open) {
+        showToast(`La ventana de ${currentCountry} se cerro`);
+        showView(pickerView);
+        loadCountries();
+        return;
+      }
+      updateStatus(data.proxy, data.switches);
+      if (data.switches > lastSwitches) {
+        showToast(`Proxy reemplazado automaticamente (nuevo: ${data.proxy ? data.proxy.ip : "?"})`);
+        lastSwitches = data.switches;
+      }
+    }
+    setTimeout(pollStatus, 5000);
+  }
+
+  // ---- modo navegador embebido (multiusuario remoto) ----
+  let embedWarned60 = false;
+  let embedWarned10 = false;
+
+  async function openEmbed(country, freeOnly) {
+    const res = await fetch(`/api/browse/start?country=${country}${freeOnly ? "&free=1" : ""}`);
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || "No se pudo iniciar la navegacion"); return; }
+
+    document.getElementById("embedCountryBadge").textContent = country + (data.freeOnly ? " (solo gratuitos)" : "");
+    embedWarned60 = false;
+    embedWarned10 = false;
+    showView(embedView);
+    navigateEmbed("https://example.com");
+    pollEmbedStatus();
+  }
+
+  async function pollEmbedStatus() {
+    if (!embedView.classList.contains("active")) return;
+    const res = await fetch("/api/browse/status");
+    const data = await res.json();
+    const countdown = document.getElementById("sessionCountdown");
+
+    if (!data.active) {
+      countdown.textContent = "Sesion terminada";
+      showToast("Tu sesion de 10 minutos termino. Elige un pais para abrir una nueva.");
+      setTimeout(() => { showView(pickerView); loadCountries(); }, 2500);
+      return;
+    }
+
+    const m = Math.floor(data.secondsRemaining / 60);
+    const s = data.secondsRemaining % 60;
+    countdown.textContent = `${m}:${s.toString().padStart(2, "0")} restante`;
+
+    if (data.secondsRemaining <= 60 && !embedWarned60) {
+      embedWarned60 = true;
+      showToast("Tu sesion se cierra en menos de 1 minuto.");
+    }
+    if (data.secondsRemaining <= 10 && !embedWarned10) {
+      embedWarned10 = true;
+      showToast("Tu sesion esta a punto de cerrarse...");
+    }
+
+    setTimeout(pollEmbedStatus, 5000);
+  }
+
+  function navigateEmbed(url) {
+    document.getElementById("embedUrlInput").value = url;
+    document.getElementById("embedFrame").src = `/browse?url=${encodeURIComponent(url)}`;
+  }
+
+  document.getElementById("embedGoBtn").addEventListener("click", () => {
+    let url = document.getElementById("embedUrlInput").value.trim();
+    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+    navigateEmbed(url);
+  });
+  document.getElementById("embedUrlInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") document.getElementById("embedGoBtn").click();
+  });
+  document.getElementById("embedBackBtn").addEventListener("click", () => { showView(pickerView); loadCountries(); });
+
+  loadWhoami();
+  loadCountries();
+  setInterval(loadCountries, 15000);
+  setInterval(loadWhoami, 20000);
+</script>
+</body>
+</html>
