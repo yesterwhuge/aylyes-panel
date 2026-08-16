@@ -36,9 +36,11 @@ async function api(method, urlPath, { token, body } = {}) {
 let mainWindow;
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 380,
-    height: 560,
-    resizable: false,
+    width: 860,
+    height: 640,
+    minWidth: 640,
+    minHeight: 480,
+    resizable: true,
     autoHideMenuBar: true,
     icon: path.join(__dirname, "icon.png"),
     webPreferences: {

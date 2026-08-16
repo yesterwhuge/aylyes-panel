@@ -3,6 +3,7 @@ const views = { login: $("loginView"), otp: $("otpView"), main: $("mainView") };
 function showView(name) {
   Object.values(views).forEach((v) => v.classList.remove("active"));
   views[name].classList.add("active");
+  $("whoRow").style.display = name === "main" ? "flex" : "none";
 }
 
 let token = null;
@@ -24,6 +25,23 @@ function countryName(code) {
 function flagEmoji(code) {
   if (!code || code.length !== 2) return "";
   return [...code.toUpperCase()].map((ch) => String.fromCodePoint(127397 + ch.charCodeAt(0))).join("");
+}
+
+// misma agrupacion por region que usa el panel web, para que se vea igual
+const REGION_MAP = {
+  "Latinoamerica": ["AR","BO","BR","CL","CO","CR","CU","EC","SV","GT","HT","HN","MX","NI","PA","PY","PE","DO","UY","VE"],
+  "Norteamerica": ["CA","US"],
+  "Europa": ["DE","AT","BE","FR","LI","LU","MC","NL","CH","GB","ES","IT","PT","IE","PL"],
+  "Nordicos": ["NO","SE","FI","DK","IS"],
+  "Asia del Sur": ["AF","MV","IN","PK","BD","NP","LK"],
+  "Medio Oriente / Africa": ["LY","EG","SA","AE","MA","ZA","IQ","IR"],
+};
+const REGION_ORDER = ["Latinoamerica", "Norteamerica", "Europa", "Nordicos", "Asia del Sur", "Medio Oriente / Africa", "Otros"];
+function regionOf(code) {
+  for (const [region, codes] of Object.entries(REGION_MAP)) {
+    if (codes.includes(code)) return region;
+  }
+  return "Otros";
 }
 
 $("loginBtn").addEventListener("click", async () => {
@@ -85,25 +103,46 @@ async function loadMain() {
   $("whoami").textContent = `@${me.username}`;
 
   const countries = await window.aylyes.getCountries(token);
-  if (countries.ok) {
-    $("countrySelect").innerHTML = countries.countries
-      .map((c) => `<option value="${c}">${flagEmoji(c)} ${countryName(c)}</option>`)
-      .join("");
-  }
+  if (countries.ok) renderGrid(countries.countries);
 
   const { connected } = await window.aylyes.isConnected();
   if (!connected) showDisconnected();
 }
 
+function renderGrid(codes) {
+  const byRegion = {};
+  for (const c of codes) {
+    const r = regionOf(c);
+    (byRegion[r] = byRegion[r] || []).push(c);
+  }
+
+  $("gridScroll").innerHTML = REGION_ORDER
+    .filter((region) => byRegion[region] && byRegion[region].length)
+    .map((region) => `
+      <div class="region-header">${region}</div>
+      <div class="country-grid">
+        ${byRegion[region].map((c) => `
+          <button class="country-card" data-country="${c}">
+            <span class="code">${c}</span>
+            <div class="flag">${flagEmoji(c)}</div>
+            <div class="name">${countryName(c)}</div>
+          </button>
+        `).join("")}
+      </div>
+    `).join("");
+
+  $("gridScroll").querySelectorAll(".country-card").forEach((card) => {
+    card.addEventListener("click", () => connectTo(card.dataset.country, card));
+  });
+}
+
 function showDisconnected() {
-  $("disconnectedBlock").style.display = "block";
-  $("connectedBlock").style.display = "none";
+  $("statusStrip").classList.remove("show");
 }
 
 let countdownTimer = null;
 function showConnected(data) {
-  $("disconnectedBlock").style.display = "none";
-  $("connectedBlock").style.display = "block";
+  $("statusStrip").classList.add("show");
   $("connectedCountry").textContent = `${flagEmoji(data.country)} ${countryName(data.country)}`;
 
   clearInterval(countdownTimer);
@@ -118,21 +157,17 @@ function showConnected(data) {
   countdownTimer = setInterval(tick, 1000);
 }
 
-$("connectBtn").addEventListener("click", async () => {
-  const country = $("countrySelect").value;
+async function connectTo(country, card) {
   const err = $("mainError");
   err.textContent = "";
-  if (!country) { err.textContent = "Elige un pais."; return; }
+  card.classList.add("loading");
 
-  $("connectBtn").disabled = true;
-  $("connectBtn").textContent = "Abriendo Chrome...";
   const res = await window.aylyes.connect(token, country);
-  $("connectBtn").disabled = false;
-  $("connectBtn").textContent = "Conectar →";
+  card.classList.remove("loading");
 
   if (res.ok) showConnected(res);
   else err.textContent = res.error;
-});
+}
 
 $("disconnectBtn").addEventListener("click", async () => {
   await window.aylyes.disconnect();
