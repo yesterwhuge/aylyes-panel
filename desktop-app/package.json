@@ -1,0 +1,38 @@
+{
+  "name": "aylyes-launcher",
+  "version": "1.0.0",
+  "description": "App de escritorio: elige un pais y abre tu Chrome real con ese proxy, como GoLogin/Multilogin pero conectado a tu propia cuenta de AYLYES.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "axios": "^1.7.4",
+    "https-proxy-agent": "^7.0.5",
+    "proxy-chain": "^2.5.3",
+    "puppeteer-core": "^22.15.0",
+    "socks-proxy-agent": "^8.0.4"
+  },
+  "devDependencies": {
+    "electron": "^31.3.0",
+    "electron-builder": "^24.13.3",
+    "electron-packager": "^17.1.2"
+  },
+  "build": {
+    "appId": "com.aylyes.launcher",
+    "productName": "AYLYES Launcher",
+    "win": {
+      "target": "nsis"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/electron-builder"
+    ]
+  },
+  "lavamoat": {
+    "allowScripts": {
+      "electron#31.7.7": true
+    }
+  }
+}
