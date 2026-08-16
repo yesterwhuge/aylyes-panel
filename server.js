@@ -259,6 +259,14 @@ app.get("/api/extension/countries", requireExtensionAuth, (req, res) => {
 // compatibilidad total. Comparte la misma sesion de 10 min / mismo credito
 // que el modo embebido (por sessionID propio de la extension, uno por
 // token), para no duplicar logica de creditos.
+// recuerda que IPs ya se le dieron a cada usuario en cada pais entre
+// sesiones distintas (no solo dentro de una sesion), para que cada vez que
+// abra sesion nueva (extension o launcher) le toque una IP diferente a la
+// anterior en vez de repetir -- mismo mecanismo que ya usa el modo Chrome
+// real de escritorio (browserLauncher.js). Cuando ya se probaron todas las
+// disponibles, el ciclo se reinicia solo.
+const extUsedIpHistory = new Map(); // "usuario:pais" -> Set de proxyKey ya usados
+
 app.get("/api/extension/proxy", requireExtensionAuth, async (req, res) => {
   touchActivity();
   const country = (req.query.country || "").toUpperCase();
@@ -283,6 +291,17 @@ app.get("/api/extension/proxy", requireExtensionAuth, async (req, res) => {
     return res.status(403).json({ error: "Ya no te quedan sesiones disponibles. Pidele mas al administrador." });
   }
   session.freeOnly = freeOnly;
+
+  if (isNew) {
+    // sesion nueva de verdad (no reutilizando una activa): engancha el
+    // historial persistente de IPs de este usuario+pais para que no repita
+    const historyKey = `${req.extUsername}:${country}`;
+    let history = extUsedIpHistory.get(historyKey) || new Set();
+    const stillHasFresh = pool.some((p) => !history.has(proxyKey(p)));
+    if (!stillHasFresh) history = new Set(); // ya se dio la vuelta completa, reinicia
+    session.triedProxyKeys = history;
+    extUsedIpHistory.set(historyKey, history);
+  }
 
   if (!session.proxy) {
     const picked = assignProxy(session, pool);
