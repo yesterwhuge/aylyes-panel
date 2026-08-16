@@ -143,6 +143,7 @@ function showConnected(proxy) {
   $("disconnectedBlock").style.display = "none";
   $("connectedBlock").style.display = "block";
   $("connectedCountry").textContent = `${flagEmoji(proxy.country)} ${countryName(proxy.country)}`;
+  $("connectedIp").textContent = proxy.exitIp ? `IP: ${proxy.exitIp}` : "";
 
   clearInterval(countdownTimer);
   function tick() {

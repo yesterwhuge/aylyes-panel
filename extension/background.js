@@ -81,6 +81,7 @@ async function connect(country) {
       port: data.port,
       username: data.username,
       password: data.password,
+      exitIp: data.exitIp || null,
       expiresAt: data.expiresAt,
     },
   });

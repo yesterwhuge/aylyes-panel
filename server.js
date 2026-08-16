@@ -331,10 +331,12 @@ app.get("/api/extension/proxy", requireExtensionAuth, async (req, res) => {
     extUsedIpHistory.set(historyKey, history);
   }
 
-  if (!session.proxy) {
-    const picked = assignProxy(session, pool);
-    if (!picked) return res.status(503).json({ error: `No hay proxies vivos para ${country} en este momento` });
-  }
+  // esta ruta ES la accion de "Conectar" (la llama la extension/launcher solo
+  // cuando el usuario le da click) -- asi que SIEMPRE asigna un proxy fresco,
+  // no reusa el que ya tenia la sesion. assignProxy ya evita repetir IPs
+  // usadas antes (via triedProxyKeys/historial) hasta que se agoten todas.
+  const picked = assignProxy(session, pool);
+  if (!picked) return res.status(503).json({ error: `No hay proxies vivos para ${country} en este momento` });
 
   // dnsAliasHost es solo para la extension de Chrome (ver comentario arriba);
   // el Launcher de escritorio sigue usando "ip" tal cual, sin este truco,
@@ -352,6 +354,7 @@ app.get("/api/extension/proxy", requireExtensionAuth, async (req, res) => {
     port: session.proxy.port,
     username: session.proxy.username,
     password: session.proxy.password,
+    exitIp: session.proxy.exitIp || null,
     dnsAliasHost,
     expiresAt: session.startedAt + SESSION_DURATION_MS,
     durationMs: SESSION_DURATION_MS,

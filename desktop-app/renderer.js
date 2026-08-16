@@ -156,6 +156,7 @@ let countdownTimer = null;
 function showConnected(data) {
   $("statusStrip").classList.add("show");
   $("connectedCountry").textContent = `${flagEmoji(data.country)} ${countryName(data.country)}`;
+  $("connectedIp").textContent = data.exitIp ? `IP: ${data.exitIp}` : "";
 
   clearInterval(countdownTimer);
   function tick() {

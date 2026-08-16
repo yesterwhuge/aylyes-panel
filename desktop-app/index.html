@@ -73,6 +73,7 @@
   .status-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); flex-shrink: 0; }
   .status-country { font-weight: 700; font-size: 13px; }
   .status-time { color: var(--muted); font-size: 11px; margin-left: 4px; }
+  .status-ip { color: var(--cyan); font-size: 11px; margin-top: 2px; font-family: 'Consolas', monospace; user-select: text; }
   .status-strip .btn.danger { width: auto; padding: 6px 14px; font-size: 11px; margin-left: auto; }
 
   .grid-scroll { flex: 1; overflow-y: auto; padding: 16px 20px 20px; }
@@ -128,8 +129,11 @@
 <div id="mainView" class="view">
   <div class="status-strip" id="statusStrip">
     <div class="status-dot"></div>
-    <span class="status-country" id="connectedCountry"></span>
-    <span class="status-time" id="connectedTime"></span>
+    <div>
+      <span class="status-country" id="connectedCountry"></span>
+      <span class="status-time" id="connectedTime"></span>
+      <div class="status-ip" id="connectedIp"></div>
+    </div>
     <button class="btn danger" id="disconnectBtn">Desconectar</button>
   </div>
   <div class="error main-error" id="mainError"></div>

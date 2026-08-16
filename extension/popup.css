@@ -66,3 +66,4 @@ body {
 }
 .status-country { font-weight: 700; font-size: 14px; }
 .status-time { color: var(--muted); font-size: 11px; }
+.status-ip { color: var(--cyan); font-size: 11px; margin-top: 3px; font-family: Consolas, monospace; user-select: text; }
