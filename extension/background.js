@@ -68,7 +68,12 @@ async function connect(country) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "No se pudo conectar");
 
-  await setChromeProxy(data.ip, data.port);
+  // usamos el alias de nip.io si el servidor lo mando (ver comentario en
+  // el servidor) para que Chrome trate cada pais como un servidor nuevo y
+  // no se quede pegado repitiendo el primer pais al que se conecto
+  const connectHost = data.dnsAliasHost || data.ip;
+  await clearChromeProxy(); // por si quedaba algo de una conexion anterior
+  await setChromeProxy(connectHost, data.port);
   await chrome.storage.local.set({
     activeProxy: {
       country: data.country,

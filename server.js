@@ -1,5 +1,7 @@
 require("dotenv").config();
 const path = require("path");
+const crypto = require("crypto");
+const dns = require("dns").promises;
 const express = require("express");
 const session = require("express-session");
 const cron = require("node-cron");
@@ -253,6 +255,32 @@ app.get("/api/extension/countries", requireExtensionAuth, (req, res) => {
   res.json([...set].sort());
 });
 
+// Chrome cachea la autenticacion de un proxy por host:puerto y no vuelve a
+// preguntar aunque le mandemos credenciales nuevas -- como todos los
+// proxies de Webshare comparten el mismo host:puerto, la EXTENSION (que no
+// puede levantar un mini-proxy local como si hace el Launcher de escritorio)
+// se quedaba pegada en el primer pais al que se conectaba. Truco: en vez de
+// mandarle a Chrome el hostname real, le mandamos un alias de nip.io
+// (servicio DNS gratis, sin registrar nada) que resuelve a la MISMA ip pero
+// con un subdominio random distinto en cada sesion -- Chrome lo trata como
+// un servidor nuevo y si vuelve a autenticar. Puramente cosmetico para
+// Chrome, la conexion real sigue siendo a Webshare.
+let webshareIpCache = null;
+let webshareIpCacheAt = 0;
+async function resolveWebshareIp(hostname) {
+  if (webshareIpCache && Date.now() - webshareIpCacheAt < 5 * 60 * 1000) return webshareIpCache;
+  const { address } = await dns.lookup(hostname);
+  webshareIpCache = address;
+  webshareIpCacheAt = Date.now();
+  return address;
+}
+async function buildNipIoAlias(hostname) {
+  const ip = await resolveWebshareIp(hostname);
+  const dashedIp = ip.split(".").join("-");
+  const randomId = crypto.randomBytes(4).toString("hex");
+  return `s${randomId}.${dashedIp}.nip.io`;
+}
+
 // Credenciales crudas del proxy (host/puerto/usuario/clave) para que el
 // Chrome DE VERDAD del usuario lo use via chrome.proxy -- a diferencia de
 // /browse (que reescribe el HTML y solo sirve para paginas simples), esto da
@@ -308,12 +336,23 @@ app.get("/api/extension/proxy", requireExtensionAuth, async (req, res) => {
     if (!picked) return res.status(503).json({ error: `No hay proxies vivos para ${country} en este momento` });
   }
 
+  // dnsAliasHost es solo para la extension de Chrome (ver comentario arriba);
+  // el Launcher de escritorio sigue usando "ip" tal cual, sin este truco,
+  // porque su mini-proxy local no tiene el problema de cache de Chrome.
+  let dnsAliasHost = null;
+  try {
+    dnsAliasHost = await buildNipIoAlias(session.proxy.ip);
+  } catch {
+    dnsAliasHost = null; // si falla la resolucion, la extension cae de vuelta al host real
+  }
+
   res.json({
     country,
     ip: session.proxy.ip,
     port: session.proxy.port,
     username: session.proxy.username,
     password: session.proxy.password,
+    dnsAliasHost,
     expiresAt: session.startedAt + SESSION_DURATION_MS,
     durationMs: SESSION_DURATION_MS,
   });
