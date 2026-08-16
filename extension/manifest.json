@@ -3,7 +3,7 @@
   "name": "AYLYES PANEL",
   "version": "1.0.0",
   "description": "Elige un pais y navega con ese proxy directo en tu Chrome, sin abrir nada aparte.",
-  "permissions": ["proxy", "storage", "webRequest", "webRequestAuthProvider", "alarms", "notifications"],
+  "permissions": ["proxy", "storage", "webRequest", "webRequestAuthProvider", "alarms", "notifications", "tabs"],
   "host_permissions": ["http://localhost:3000/*", "http://*/*", "https://*/*"],
   "background": {
     "service_worker": "background.js",

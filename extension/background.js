@@ -43,6 +43,17 @@ async function setChromeProxy(ip, port) {
   });
 }
 
+// recarga las pestañas ya abiertas -- si no, siguen mostrando lo que sea
+// que hayan cargado ANTES de cambiar de proxy (paginas como "cual es mi
+// ip" no se actualizan solas, por eso parecia que seguia saliendo la IP
+// vieja aunque el proxy si haya cambiado)
+async function reloadOpenTabs() {
+  const tabs = await chrome.tabs.query({ url: ["http://*/*", "https://*/*"] });
+  for (const tab of tabs) {
+    chrome.tabs.reload(tab.id).catch(() => {});
+  }
+}
+
 async function clearChromeProxy() {
   await chrome.proxy.settings.clear({ scope: "regular" });
 }
@@ -68,6 +79,8 @@ async function connect(country) {
       expiresAt: data.expiresAt,
     },
   });
+
+  await reloadOpenTabs();
 
   const msLeft = data.expiresAt - Date.now();
   chrome.alarms.clear(ALARM_NAME);
