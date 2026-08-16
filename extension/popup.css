@@ -1,0 +1,68 @@
+:root {
+  --bg: #05060a; --panel: #0d1018; --panel-2: #10141f; --border: #1e2536;
+  --text: #e7ecff; --muted: #6d7690; --cyan: #29f5ff; --purple: #b46bff;
+  --green: #3ef5a0; --red: #ff5c7a;
+}
+* { box-sizing: border-box; }
+body {
+  width: 300px;
+  margin: 0;
+  padding: 16px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+}
+.topbar {
+  display: flex; align-items: baseline; gap: 8px;
+  margin-bottom: 16px;
+}
+.logo {
+  font-weight: 800; letter-spacing: 3px; font-size: 16px;
+  background: linear-gradient(90deg, var(--cyan), var(--purple));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.sub { font-size: 9px; letter-spacing: 2px; color: var(--muted); }
+
+.field { margin-bottom: 12px; }
+.field label {
+  display: block; font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 4px;
+}
+.field input, .field select {
+  width: 100%; background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px; color: var(--text); font-size: 13px;
+  outline: none;
+}
+.field input:focus, .field select:focus { border-color: var(--cyan); }
+
+.btn {
+  width: 100%; padding: 10px; border: none; border-radius: 999px;
+  font-weight: 700; font-size: 13px; cursor: pointer;
+}
+.btn.primary { background: linear-gradient(90deg, var(--cyan), var(--purple)); color: #05060a; }
+.btn.danger { background: rgba(255,92,122,0.12); border: 1px solid var(--red); color: var(--red); }
+.btn:disabled { opacity: 0.6; cursor: default; }
+
+.error { color: var(--red); font-size: 11px; margin-top: 10px; min-height: 14px; }
+.hint { color: var(--muted); font-size: 11px; line-height: 1.5; margin: 10px 0; }
+
+.who-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px; font-size: 12px; color: var(--muted);
+}
+.link-btn {
+  background: none; border: none; color: var(--purple); cursor: pointer; font-size: 11px; padding: 0;
+}
+
+.status-card {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px; margin-bottom: 4px;
+}
+.status-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--green); box-shadow: 0 0 8px var(--green); flex-shrink: 0;
+}
+.status-country { font-weight: 700; font-size: 14px; }
+.status-time { color: var(--muted); font-size: 11px; }

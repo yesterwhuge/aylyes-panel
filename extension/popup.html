@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>AYLYES PANEL</title>
+<link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+
+<div class="topbar">
+  <span class="logo">AYLYES</span>
+  <span class="sub">PANEL</span>
+</div>
+
+<!-- paso 1: login -->
+<div id="loginView" class="view">
+  <div class="field">
+    <label>Usuario</label>
+    <input type="text" id="loginUsername" autocomplete="username" />
+  </div>
+  <div class="field">
+    <label>Clave</label>
+    <input type="password" id="loginPassword" autocomplete="current-password" />
+  </div>
+  <button class="btn primary" id="loginBtn">Iniciar sesion &rarr;</button>
+  <div class="error" id="loginError"></div>
+</div>
+
+<!-- paso 2: otp -->
+<div id="otpView" class="view" style="display:none;">
+  <p class="hint">Te mandamos un codigo por Telegram.</p>
+  <div class="field">
+    <label>Codigo</label>
+    <input type="text" id="otpCode" inputmode="numeric" maxlength="6" placeholder="000000" />
+  </div>
+  <button class="btn primary" id="otpBtn">Verificar &rarr;</button>
+  <div class="error" id="otpError"></div>
+</div>
+
+<!-- paso 3: elegir pais / estado conectado -->
+<div id="mainView" class="view" style="display:none;">
+  <div class="who-row">
+    <span id="whoami"></span>
+    <button class="link-btn" id="logoutBtn">Salir</button>
+  </div>
+
+  <div id="disconnectedBlock">
+    <div class="field">
+      <label>Pais</label>
+      <select id="countrySelect"></select>
+    </div>
+    <button class="btn primary" id="connectBtn">Conectar &rarr;</button>
+  </div>
+
+  <div id="connectedBlock" style="display:none;">
+    <div class="status-card">
+      <div class="status-dot"></div>
+      <div>
+        <div class="status-country" id="connectedCountry"></div>
+        <div class="status-time" id="connectedTime"></div>
+      </div>
+    </div>
+    <p class="hint">Tu Chrome ya esta usando este proxy. Cualquier pagina que abras va a salir con esta IP.</p>
+    <button class="btn danger" id="disconnectBtn">Desconectar</button>
+  </div>
+
+  <div class="error" id="mainError"></div>
+</div>
+
+<script type="module" src="popup.js"></script>
+</body>
+</html>

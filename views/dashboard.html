@@ -1349,9 +1349,22 @@
     document.getElementById("embedFrame").src = `/browse?url=${encodeURIComponent(url)}`;
   }
 
+  // si no parece un dominio de verdad (sin punto, tiene espacios, etc.) lo
+  // mandamos a buscar en Google en vez de intentar cargarlo como si fuera
+  // una pagina -- asi se comporta como cualquier navegador normal
+  function looksLikeDomain(text) {
+    if (/\s/.test(text)) return false;
+    return /^https?:\/\//i.test(text) || /^[a-z0-9-]+(\.[a-z0-9-]+)+([:/?#].*)?$/i.test(text);
+  }
+
   document.getElementById("embedGoBtn").addEventListener("click", () => {
     let url = document.getElementById("embedUrlInput").value.trim();
-    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+    if (!url) return;
+    if (!looksLikeDomain(url)) {
+      url = "https://www.google.com/search?q=" + encodeURIComponent(url);
+    } else if (!/^https?:\/\//i.test(url)) {
+      url = "https://" + url;
+    }
     navigateEmbed(url);
   });
   document.getElementById("embedUrlInput").addEventListener("keydown", (e) => {

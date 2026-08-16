@@ -10,11 +10,12 @@ const store = require("./proxyStore");
 const { verifyUser, requireAuth, requireAdmin, addUser, removeUser, addSessions, setSessions, setBlocked, hasSessionsLeft, consumeSession, loadUsers, setTelegramLink } = require("./auth");
 const { fetchThroughSession, rewriteHtml, STRIPPED_HEADERS, getOrCreateBrowseSession, getBrowseSession, browseSessions, isSessionExpired, SESSION_DURATION_MS } = require("./proxyBrowser");
 const { fetchAccountStats, fetchPlanLimits } = require("./webshareSource");
-const { proxyKey } = require("./sessions");
+const { proxyKey, assignProxy } = require("./sessions");
 const { loadSettings, saveSettings } = require("./settings");
 const { enrichWithFraudScore } = require("./fraudCheck");
 const { loadKeys, createKey, removeKey, findValidKey, markRedeemed } = require("./keys");
 const telegramBot = require("./telegramBot");
+const { createExtToken, verifyExtToken, revokeExtToken } = require("./extensionTokens");
 
 const PORT = process.env.PORT || 3000;
 const REFRESH_CRON = "0 * * * *"; // reintenta cada hora, pero se salta el escaneo si nadie esta usando el panel
@@ -183,6 +184,120 @@ app.post("/api/redeem", (req, res) => {
 
   req.session.username = username;
   res.json({ ok: true, sessions });
+});
+
+// ---------- Extension de Chrome ----------
+// No usa la cookie de sesion normal (ver extensionTokens.js) -- por eso
+// estas rutas van ANTES de app.use(requireAuth) y validan con su propio
+// middleware en cada una.
+function requireExtensionAuth(req, res, next) {
+  const auth = req.headers.authorization || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+  const username = token ? verifyExtToken(token) : null;
+  if (!username) return res.status(401).json({ error: "No autenticado" });
+
+  const user = loadUsers().find((u) => u.username === username);
+  if (!user || user.isBlocked) {
+    if (token) revokeExtToken(token);
+    return res.status(401).json({ error: user ? "Tu cuenta esta bloqueada" : "Tu cuenta ya no existe" });
+  }
+
+  req.extUsername = username;
+  req.extToken = token;
+  next();
+}
+
+app.post("/api/extension/login", (req, res) => {
+  const { username, password } = req.body || {};
+  if (!username || !password || !verifyUser(username, password)) {
+    return res.status(401).json({ error: "Usuario o clave incorrectos" });
+  }
+
+  const user = loadUsers().find((u) => u.username === username);
+  if (user && user.isBlocked) {
+    return res.status(403).json({ error: "Tu cuenta esta bloqueada. Contacta al administrador." });
+  }
+
+  // mismo OTP que el login web -- si ya pediste uno desde la pagina, ese
+  // mismo codigo sirve aqui tambien
+  if (user && user.telegramChatId) {
+    const code = telegramBot.generateOtp(username);
+    telegramBot.sendMessage(user.telegramChatId, `Tu codigo de acceso a AYLYES es: ${code} (vence en 5 minutos)`);
+    return res.json({ ok: true, otpRequired: true, username });
+  }
+
+  res.json({ ok: true, token: createExtToken(username) });
+});
+
+app.post("/api/extension/login/verify-otp", (req, res) => {
+  const { username, otp } = req.body || {};
+  if (!username || !otp) return res.status(400).json({ error: "Falta el codigo" });
+  if (!telegramBot.verifyOtp(username, otp)) {
+    return res.status(401).json({ error: "Codigo incorrecto o vencido" });
+  }
+  res.json({ ok: true, token: createExtToken(username) });
+});
+
+app.post("/api/extension/logout", requireExtensionAuth, (req, res) => {
+  revokeExtToken(req.extToken);
+  res.json({ ok: true });
+});
+
+app.get("/api/extension/me", requireExtensionAuth, (req, res) => {
+  const user = loadUsers().find((u) => u.username === req.extUsername);
+  res.json({ username: req.extUsername, isAdmin: !!user.isAdmin, sessionCredits: user.sessionCredits });
+});
+
+app.get("/api/extension/countries", requireExtensionAuth, (req, res) => {
+  const set = new Set(state.proxies.map((p) => p.country).filter(Boolean));
+  res.json([...set].sort());
+});
+
+// Credenciales crudas del proxy (host/puerto/usuario/clave) para que el
+// Chrome DE VERDAD del usuario lo use via chrome.proxy -- a diferencia de
+// /browse (que reescribe el HTML y solo sirve para paginas simples), esto da
+// compatibilidad total. Comparte la misma sesion de 10 min / mismo credito
+// que el modo embebido (por sessionID propio de la extension, uno por
+// token), para no duplicar logica de creditos.
+app.get("/api/extension/proxy", requireExtensionAuth, async (req, res) => {
+  touchActivity();
+  const country = (req.query.country || "").toUpperCase();
+  if (!country) return res.status(400).json({ error: "Falta el pais" });
+  const freeOnly = req.query.free === "1";
+
+  const user = loadUsers().find((u) => u.username === req.extUsername);
+  if (user && !hasSessionsLeft(user)) {
+    return res.status(403).json({ error: "Ya no te quedan sesiones disponibles. Pidele mas al administrador." });
+  }
+
+  await ensureFreshPool();
+  const pool = livePoolForCountry(country, freeOnly);
+  if (!pool.length) {
+    return res.status(503).json({ error: `No hay proxies ${freeOnly ? "gratuitos " : ""}vivos para ${country} todavia. Intenta de nuevo en unos segundos.` });
+  }
+
+  const sessionKey = `ext:${req.extToken}`;
+  const { session, isNew } = getOrCreateBrowseSession(sessionKey, country);
+  if (isNew && !consumeSession(req.extUsername)) {
+    browseSessions.delete(sessionKey);
+    return res.status(403).json({ error: "Ya no te quedan sesiones disponibles. Pidele mas al administrador." });
+  }
+  session.freeOnly = freeOnly;
+
+  if (!session.proxy) {
+    const picked = assignProxy(session, pool);
+    if (!picked) return res.status(503).json({ error: `No hay proxies vivos para ${country} en este momento` });
+  }
+
+  res.json({
+    country,
+    ip: session.proxy.ip,
+    port: session.proxy.port,
+    username: session.proxy.username,
+    password: session.proxy.password,
+    expiresAt: session.startedAt + SESSION_DURATION_MS,
+    durationMs: SESSION_DURATION_MS,
+  });
 });
 
 app.use(requireAuth);
