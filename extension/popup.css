@@ -28,11 +28,12 @@ body {
   margin-bottom: 16px;
 }
 .logo {
-  font-weight: 800; letter-spacing: 3px; font-size: 16px;
+  font-weight: 900; letter-spacing: 3px; font-size: 18px;
   background: linear-gradient(90deg, var(--cyan), var(--purple));
   -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 6px rgba(41,245,255,0.6));
 }
-.sub { font-size: 9px; letter-spacing: 2px; color: var(--muted); }
+.sub { font-size: 10px; letter-spacing: 2px; color: var(--text); font-weight: 600; }
 
 .field { margin-bottom: 12px; }
 .field label {
@@ -59,7 +60,7 @@ body {
 
 .who-row {
   display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 14px; font-size: 12px; color: var(--muted);
+  margin-bottom: 14px; font-size: 13px; color: var(--text); font-weight: 700;
 }
 .link-btn {
   background: none; border: none; color: var(--purple); cursor: pointer; font-size: 11px; padding: 0;
@@ -77,6 +78,10 @@ body {
   width: 10px; height: 10px; border-radius: 50%;
   background: var(--green); box-shadow: 0 0 8px var(--green); flex-shrink: 0;
 }
-.status-country { font-weight: 700; font-size: 14px; }
-.status-time { color: var(--muted); font-size: 11px; }
-.status-ip { color: var(--cyan); font-size: 11px; margin-top: 3px; font-family: Consolas, monospace; user-select: text; }
+.status-country { font-weight: 800; font-size: 16px; color: var(--text); }
+.status-time { color: var(--text); font-size: 12px; opacity: 0.85; }
+.status-ip {
+  color: var(--cyan); font-size: 12px; font-weight: 700; margin-top: 4px;
+  font-family: Consolas, monospace; user-select: text;
+  text-shadow: 0 0 6px rgba(41,245,255,0.7);
+}
