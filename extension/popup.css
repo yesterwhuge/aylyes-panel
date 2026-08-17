@@ -11,10 +11,10 @@ body {
   padding: 16px;
   background:
     linear-gradient(var(--bg), var(--bg)) padding-box,
-    linear-gradient(135deg, var(--cyan), var(--purple)) border-box;
+    linear-gradient(135deg, var(--cyan), var(--cyan)) border-box;
   border: 4px solid transparent;
   border-radius: 18px;
-  box-shadow: 0 0 24px rgba(41,245,255,0.35), 0 8px 28px rgba(0,0,0,0.5);
+  box-shadow: 0 0 24px rgba(41,245,255,0.55), 0 8px 28px rgba(0,0,0,0.5);
   color: var(--text);
   font-family: 'Segoe UI', system-ui, sans-serif;
   font-size: 13px;
@@ -64,12 +64,10 @@ body {
 
 .status-card {
   display: flex; align-items: center; gap: 10px;
-  background:
-    linear-gradient(var(--panel-2), var(--panel-2)) padding-box,
-    linear-gradient(135deg, var(--cyan), var(--purple)) border-box;
-  border: 2.5px solid transparent;
+  background: var(--panel-2);
+  border: 2.5px solid var(--cyan);
   border-radius: 12px;
-  box-shadow: 0 0 14px rgba(41,245,255,0.3);
+  box-shadow: 0 0 14px rgba(41,245,255,0.45);
   padding: 12px; margin-bottom: 4px;
 }
 .status-dot {
