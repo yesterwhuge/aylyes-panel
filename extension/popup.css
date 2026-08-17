@@ -4,14 +4,21 @@
   --green: #3ef5a0; --red: #ff5c7a;
 }
 * { box-sizing: border-box; }
+html, body { border-radius: 14px; }
 body {
   width: 300px;
   margin: 0;
   padding: 16px;
-  background: var(--bg);
+  background:
+    linear-gradient(var(--bg), var(--bg)) padding-box,
+    linear-gradient(135deg, var(--cyan), var(--purple)) border-box;
+  border: 1.5px solid transparent;
+  border-radius: 14px;
+  box-shadow: 0 0 18px rgba(41,245,255,0.15), 0 8px 24px rgba(0,0,0,0.4);
   color: var(--text);
   font-family: 'Segoe UI', system-ui, sans-serif;
   font-size: 13px;
+  overflow: hidden;
 }
 .topbar {
   display: flex; align-items: baseline; gap: 8px;
@@ -57,7 +64,12 @@ body {
 
 .status-card {
   display: flex; align-items: center; gap: 10px;
-  background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+  background:
+    linear-gradient(var(--panel-2), var(--panel-2)) padding-box,
+    linear-gradient(135deg, var(--cyan), var(--purple)) border-box;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  box-shadow: 0 0 12px rgba(41,245,255,0.2);
   padding: 12px; margin-bottom: 4px;
 }
 .status-dot {
