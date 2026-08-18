@@ -88,11 +88,15 @@ async function connect(country) {
 
   await reloadOpenTabs();
 
-  const msLeft = data.expiresAt - Date.now();
   chrome.alarms.clear(ALARM_NAME);
   chrome.alarms.clear(ALARM_WARN);
-  chrome.alarms.create(ALARM_NAME, { when: data.expiresAt });
-  if (msLeft > 60000) chrome.alarms.create(ALARM_WARN, { when: data.expiresAt - 60000 });
+  // expiresAt null = cuenta admin sin limite de tiempo -- no se programa
+  // ninguna alarma de cierre
+  if (data.expiresAt) {
+    const msLeft = data.expiresAt - Date.now();
+    chrome.alarms.create(ALARM_NAME, { when: data.expiresAt });
+    if (msLeft > 60000) chrome.alarms.create(ALARM_WARN, { when: data.expiresAt - 60000 });
+  }
 
   updateBadge(data.country);
   return data;
@@ -134,7 +138,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 // restaura el badge si el navegador se reinicia con un proxy ya activo
 chrome.runtime.onStartup.addListener(async () => {
   const { activeProxy } = await getState();
-  if (activeProxy && activeProxy.expiresAt > Date.now()) {
+  if (activeProxy && (!activeProxy.expiresAt || activeProxy.expiresAt > Date.now())) {
     updateBadge(activeProxy.country);
   } else if (activeProxy) {
     await disconnect();

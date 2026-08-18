@@ -312,8 +312,11 @@ app.get("/api/extension/proxy", requireExtensionAuth, async (req, res) => {
     return res.status(503).json({ error: `No hay proxies ${freeOnly ? "gratuitos " : ""}vivos para ${country} todavia. Intenta de nuevo en unos segundos.` });
   }
 
+  // el admin no tiene limite de tiempo de sesion (Infinity nunca "expira");
+  // todos los demas siguen con los 10 minutos normales
   const sessionKey = `ext:${req.extToken}`;
-  const { session, isNew } = getOrCreateBrowseSession(sessionKey, country);
+  const durationMs = user && user.isAdmin ? Infinity : undefined;
+  const { session, isNew } = getOrCreateBrowseSession(sessionKey, country, durationMs);
   if (isNew && !consumeSession(req.extUsername)) {
     browseSessions.delete(sessionKey);
     return res.status(403).json({ error: "Ya no te quedan sesiones disponibles. Pidele mas al administrador." });
@@ -356,8 +359,9 @@ app.get("/api/extension/proxy", requireExtensionAuth, async (req, res) => {
     password: session.proxy.password,
     exitIp: session.proxy.exitIp || null,
     dnsAliasHost,
-    expiresAt: session.startedAt + SESSION_DURATION_MS,
-    durationMs: SESSION_DURATION_MS,
+    // null = sin limite de tiempo (admin); si no, la hora real en que se cierra
+    expiresAt: session.durationMs === Infinity ? null : session.startedAt + session.durationMs,
+    durationMs: session.durationMs === Infinity ? null : session.durationMs,
   });
 });
 

@@ -159,6 +159,11 @@ function showConnected(data) {
   $("connectedIp").textContent = data.exitIp ? `IP: ${data.exitIp}` : "";
 
   clearInterval(countdownTimer);
+  if (!data.expiresAt) {
+    // cuenta admin: sin limite de tiempo, no hay cuenta regresiva
+    $("connectedTime").textContent = "Sin limite";
+    return;
+  }
   function tick() {
     const msLeft = data.expiresAt - Date.now();
     if (msLeft <= 0) { showDisconnected(); clearInterval(countdownTimer); return; }

@@ -119,7 +119,7 @@ async function loadMain() {
       .join("");
 
     const { activeProxy } = await chrome.storage.local.get("activeProxy");
-    if (activeProxy && activeProxy.expiresAt > Date.now()) {
+    if (activeProxy && (!activeProxy.expiresAt || activeProxy.expiresAt > Date.now())) {
       showConnected(activeProxy);
     } else {
       showDisconnected();
@@ -146,6 +146,11 @@ function showConnected(proxy) {
   $("connectedIp").textContent = proxy.exitIp ? `IP: ${proxy.exitIp}` : "";
 
   clearInterval(countdownTimer);
+  if (!proxy.expiresAt) {
+    // cuenta admin: sin limite de tiempo, no hay cuenta regresiva
+    $("connectedTime").textContent = "Sin limite";
+    return;
+  }
   function tick() {
     const msLeft = proxy.expiresAt - Date.now();
     if (msLeft <= 0) { showDisconnected(); clearInterval(countdownTimer); return; }

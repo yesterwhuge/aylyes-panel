@@ -176,20 +176,22 @@ const browseSessions = new Map();
 const SESSION_DURATION_MS = 10 * 60 * 1000; // cada sesion dura 10 minutos
 
 function isSessionExpired(s) {
-  return !s || Date.now() - s.startedAt >= SESSION_DURATION_MS;
+  return !s || Date.now() - s.startedAt >= (s.durationMs || SESSION_DURATION_MS);
 }
 
 // Devuelve { session, isNew } -- isNew indica si se creo una sesion nueva
 // (por eso hay que descontarle un credito al usuario) en vez de reusar una
-// que ya tenia abierta y sigue vigente.
-function getOrCreateBrowseSession(sid, country) {
+// que ya tenia abierta y sigue vigente. `durationMs` es opcional -- se usa
+// para darle al admin sesiones sin limite de tiempo (Infinity), sin tocar
+// el comportamiento normal de 10 min para todos los demas.
+function getOrCreateBrowseSession(sid, country, durationMs) {
   const existing = browseSessions.get(sid);
   if (existing && existing.country === country && !isSessionExpired(existing)) {
     return { session: existing, isNew: false };
   }
   const s = {
     sid, country, proxy: null, jar: new CookieJar(), triedProxyKeys: new Set(),
-    lastUsedAt: Date.now(), startedAt: Date.now(),
+    lastUsedAt: Date.now(), startedAt: Date.now(), durationMs: durationMs || SESSION_DURATION_MS,
   };
   browseSessions.set(sid, s);
   return { session: s, isNew: true };
