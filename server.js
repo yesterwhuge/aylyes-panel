@@ -303,7 +303,10 @@ app.get("/api/extension/proxy", requireExtensionAuth, async (req, res) => {
   // todos los demas siguen con los 10 minutos normales
   const sessionKey = `ext:${req.extToken}`;
   const durationMs = user && user.isAdmin ? Infinity : undefined;
-  const { session, isNew } = getOrCreateBrowseSession(sessionKey, country, durationMs);
+  // forceNew=true: esta ruta ES la accion de "Conectar" -- cada click cuenta
+  // como sesion nueva (gasta un credito y reinicia los 10 min), sea el mismo
+  // pais o distinto, en vez de seguir pegado a la sesion anterior.
+  const { session, isNew } = getOrCreateBrowseSession(sessionKey, country, durationMs, true);
   if (isNew && !consumeSession(req.extUsername)) {
     browseSessions.delete(sessionKey);
     return res.status(403).json({ error: "Ya no te quedan sesiones disponibles. Pidele mas al administrador." });

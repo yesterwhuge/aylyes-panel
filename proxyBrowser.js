@@ -183,10 +183,13 @@ function isSessionExpired(s) {
 // (por eso hay que descontarle un credito al usuario) en vez de reusar una
 // que ya tenia abierta y sigue vigente. `durationMs` es opcional -- se usa
 // para darle al admin sesiones sin limite de tiempo (Infinity), sin tocar
-// el comportamiento normal de 10 min para todos los demas.
-function getOrCreateBrowseSession(sid, country, durationMs) {
+// el comportamiento normal de 10 min para todos los demas. `forceNew` salta
+// la reutilizacion por completo: la usa la extension/launcher, donde cada
+// click en "Conectar" (aunque sea al mismo pais) debe contar como sesion
+// nueva y reiniciar los 10 minutos, no seguir la sesion que ya tenia.
+function getOrCreateBrowseSession(sid, country, durationMs, forceNew) {
   const existing = browseSessions.get(sid);
-  if (existing && existing.country === country && !isSessionExpired(existing)) {
+  if (!forceNew && existing && existing.country === country && !isSessionExpired(existing)) {
     return { session: existing, isNew: false };
   }
   const s = {
