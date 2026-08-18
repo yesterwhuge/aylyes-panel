@@ -63,15 +63,8 @@ app.post("/api/login", (req, res) => {
     return res.status(403).json({ error: "Tu cuenta esta bloqueada. Contacta al administrador." });
   }
 
-  // si la cuenta tiene Telegram vinculado, pedimos el codigo antes de dejarla
-  // entrar (2FA real); cuentas sin Telegram vinculado (ej. admin viejo) pasan
-  // directo para no dejar a nadie afuera por accidente
-  if (user && user.telegramChatId) {
-    const code = telegramBot.generateOtp(username);
-    telegramBot.sendMessage(user.telegramChatId, `Tu codigo de acceso a AYLYES es: ${code} (vence en 5 minutos)`);
-    return res.json({ ok: true, otpRequired: true, username });
-  }
-
+  // el codigo de Telegram solo se pide UNA vez, al crear la cuenta (ver
+  // /api/redeem) -- el login normal despues de eso es solo usuario/clave
   req.session.username = username;
   res.json({ ok: true });
 });
@@ -220,14 +213,8 @@ app.post("/api/extension/login", (req, res) => {
     return res.status(403).json({ error: "Tu cuenta esta bloqueada. Contacta al administrador." });
   }
 
-  // mismo OTP que el login web -- si ya pediste uno desde la pagina, ese
-  // mismo codigo sirve aqui tambien
-  if (user && user.telegramChatId) {
-    const code = telegramBot.generateOtp(username);
-    telegramBot.sendMessage(user.telegramChatId, `Tu codigo de acceso a AYLYES es: ${code} (vence en 5 minutos)`);
-    return res.json({ ok: true, otpRequired: true, username });
-  }
-
+  // el codigo de Telegram solo se pide UNA vez, al crear la cuenta (ver
+  // /api/redeem) -- el login normal despues de eso es solo usuario/clave
   res.json({ ok: true, token: createExtToken(username) });
 });
 
